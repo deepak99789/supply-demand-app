@@ -2,14 +2,31 @@ import streamlit as st
 import pandas as pd
 import yfinance as yf
 import plotly.graph_objects as go
+import requests
 
 # Full Screen Configuration
 st.set_page_config(layout="wide", page_title="Institutional Supply/Demand Matrix Scanner")
 
 # Centered Title Layout
 st.markdown("<h1 style='text-align: center; color: #2ecc71;'>⚡ Institutional Supply & Demand Matrix Scanner</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #bdc3c7;'>Multi-Asset, Multi-Timeframe Institutional Cluster Intelligence System</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #bdc3c7;'>Multi-Asset, Multi-Timeframe Institutional Cluster Intelligence System with Telegram Alerts</p>", unsafe_allow_html=True)
 st.markdown("---")
+
+# -------------------------------------------------------------------
+# ⚙️ TELEGRAM CONFIGURATION (Apna Token aur Chat ID Yahan Dalein)
+# -------------------------------------------------------------------
+TELEGRAM_TOKEN = "8781917241:AAFfyCdiJRCx321U_kVp0pJAe1fhKYcS5BU"
+TELEGRAM_CHAT_ID = "513065799"
+
+def send_telegram_alert(message):
+    if TELEGRAM_TOKEN == "YAHAN_APNA_BOT_TOKEN_PASTE_KAREIN" or TELEGRAM_CHAT_ID == "YAHAN_APNI_CHAT_ID_PASTE_KAREIN":
+        return # Agar credentials nahi dale toh alert skip ho jayega
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "Markdown"}
+        requests.post(url, json=payload)
+    except Exception as e:
+        pass
 
 # -------------------------------------------------------------------
 # 1. COMPLETE ASSETS MASTER DATABASE
@@ -60,47 +77,29 @@ def get_complete_asset_database():
 assets_master = get_complete_asset_database()
 
 # -------------------------------------------------------------------
-# FIXED RESAMPLING ENGINE (Timezone Bug Fixed)
+# RESAMPLING ENGINE
 # -------------------------------------------------------------------
 def resample_data(df, timeframe_str):
-    if df.empty:
-        return df
-        
-    # Sabse pehle Timezone ko hatana zaroori hai varna Pandas resample fail ho jata hai
+    if df.empty: return df
     df = df.copy()
     if df.index.tz is not None:
         df.index = df.index.tz_localize(None)
-        
     if timeframe_str in ['5m', '15m', '30m', '1h', '1d', '1wk']:
         return df
-        
     resample_map = {
         "45m": "45min", "75m": "75min", "125m": "125min", 
-        "2h": "2h", "4h": "4h", "5h": "5h", 
-        "6h": "6h", "8h": "8h", "10h": "10h", "16h": "16h"
+        "2h": "2h", "4h": "4h", "5h": "5h", "6h": "6h", "8h": "8h", "10h": "10h", "16h": "16h"
     }
     rule = resample_map.get(timeframe_str)
-    if not rule: 
-        return df
-        
-    resampled = df.resample(rule).agg({
-        'Open': 'first', 
-        'High': 'max', 
-        'Low': 'min', 
-        'Close': 'last', 
-        'Volume': 'sum'
-    }).dropna()
-    
-    return resampled
+    if not rule: return df
+    return df.resample(rule).agg({'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'}).dropna()
 
 # -------------------------------------------------------------------
 # S&D CORE SCANNING ENGINE
 # -------------------------------------------------------------------
 def scan_supply_demand_zones(df, symbol_name, tf_name):
     zones = []
-    if len(df) < 10: 
-        return zones
-    
+    if len(df) < 10: return zones
     df = df.copy()
     df['candle_size'] = (df['High'] - df['Low']).abs()
     df['body_size'] = (df['Close'] - df['Open']).abs()
@@ -114,32 +113,18 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
             legout_idx = i + num_base
             follow_up_idx = legout_idx + 1
             
-            if follow_up_idx >= len(df): 
-                continue
-                
-            legin = df.iloc[legin_idx]
-            legout = df.iloc[legout_idx]
-            follow_up = df.iloc[follow_up_idx]
-            bases = df.iloc[base_indices]
+            if follow_up_idx >= len(df): continue
+            legin, legout, follow_up, bases = df.iloc[legin_idx], df.iloc[legout_idx], df.iloc[follow_up_idx], df.iloc[base_indices]
             
-            # Condition 1: Explosive Check (>60% Body)
-            if legin['body_ratio'] < 60 or legout['body_ratio'] < 60: 
-                continue
-            
-            # Condition 2: Base Candle Body <= 50% of Legin Body
+            if legin['body_ratio'] < 60 or legout['body_ratio'] < 60: continue
             valid_bases = True
             for _, base in bases.iterrows():
                 if base['body_size'] > (legin['body_size'] * 0.5):
                     valid_bases = False
                     break
-            if not valid_bases: 
-                continue
-                
-            # Condition 3: Legout > Legin & Follow-up color check
-            if legout['body_size'] <= legin['body_size']: 
-                continue
-            if legout['is_green'] != follow_up['is_green']: 
-                continue
+            if not valid_bases: continue
+            if legout['body_size'] <= legin['body_size']: continue
+            if legout['is_green'] != follow_up['is_green']: continue
                 
             legin_green, legout_green = legin['is_green'], legout['is_green']
             zone_type, proximal, distal = None, 0.0, 0.0
@@ -204,6 +189,9 @@ with row2_col2:
 st.markdown("##### 🔍 Quick External Ticker Override")
 quick_search = st.text_input("Type any unique global asset symbol (e.g., GOOG, TCS.NS, ETH-USD):", "").strip()
 
+# Alert Enable Option
+send_alerts = st.checkbox("📢 Send Fresh Zones to Telegram Channel/Bot", value=True)
+
 st.markdown("<br>", unsafe_allow_html=True)
 run_scan_btn = st.button("🚀 START STRUCTURAL MATRIX SCAN", use_container_width=True)
 st.markdown("---")
@@ -212,12 +200,9 @@ st.markdown("---")
 # EXECUTION ENGINE PIPELINE
 # -------------------------------------------------------------------
 if run_scan_btn:
-    if quick_search:
-        target_symbols = [quick_search]
-    elif selected_symbol_raw == "🎨 [ALL SYMBOLS]":
-        target_symbols = assets_master[market_cat]
-    else:
-        target_symbols = [selected_symbol_raw]
+    if quick_search: target_symbols = [quick_search]
+    elif selected_symbol_raw == "🎨 [ALL SYMBOLS]": target_symbols = assets_master[market_cat]
+    else: target_symbols = [selected_symbol_raw]
         
     all_detected_zones = []
     
@@ -226,41 +211,50 @@ if run_scan_btn:
             for tf_label in selected_tf_labels:
                 tf_code = timeframe_dictionary[tf_label]
                 
-                # --- FIXED DATA RETRIEVAL RULES ---
                 if tf_code in ["5m", "15m", "30m", "45m", "75m", "125m"]:
-                    fetch_interval = "5m"
-                    history_period = "59d"  # Yahoo maximum allowed boundary for 5m feed
+                    fetch_interval, history_period = "5m", "59d"
                 elif tf_code in ["1h", "2h", "4h", "5h", "6h", "8h", "10h", "16h"]:
-                    fetch_interval = "1h"
-                    history_period = "360d" # Absolute stable limit for 1h feed
+                    fetch_interval, history_period = "1h", "360d"
                 else:
-                    fetch_interval = "1d"
-                    history_period = "5y"
+                    fetch_interval, history_period = "1d", "5y"
                 
                 try:
-                    # Fetching Data
-                    ticker_obj = yf.Ticker(symbol)
-                    raw_feed = ticker_obj.history(period=history_period, interval=fetch_interval)
+                    raw_feed = yf.Ticker(symbol).history(period=history_period, interval=fetch_interval)
+                    if raw_feed.empty: continue
                     
-                    if raw_feed.empty: 
-                        continue
-                    
-                    # Processing and Resampling
                     processed_feed = resample_data(raw_feed, tf_code)
                     zone_logs = scan_supply_demand_zones(processed_feed, symbol, tf_label)
                     all_detected_zones.extend(zone_logs)
-                except Exception as e:
+                except Exception:
                     continue
 
-    # Display Engine
+    # Display & Alert Engine
     if all_detected_zones:
         master_df = pd.DataFrame(all_detected_zones)
-        
         if zone_filter_mode != "All":
             master_df = master_df[master_df["Status"] == zone_filter_mode]
             
-        st.success(f"📊 Matrix Sweep Completed! Found {len(master_df)} valid structure points.")
+        st.success(f"📊 Matrix Sweep Completed! Found {len(master_df)} structure points.")
         
+        # Telegram Alert Routing for Fresh Zones
+        if send_alerts and not master_df.empty:
+            fresh_only_df = master_df[master_df["Status"] == "Fresh"]
+            if not fresh_only_df.empty:
+                for _, alert_row in fresh_only_df.iterrows():
+                    emoji = "🟢 DEMAND ZONE" if "Demand" in alert_row['Zone Type'] else "🔴 SUPPLY ZONE"
+                    alert_msg = (
+                        f"🚨 *NEW INSTALMENT ZONE SPOTTED*\n\n"
+                        f"{emoji}\n"
+                        f"🔹 *Asset:* `{alert_row['Symbol']}`\n"
+                        f"⏱️ *Timeframe:* {alert_row['Timeframe']}\n"
+                        f"📐 *Type:* {alert_row['Zone Type']}\n"
+                        f"📌 *Proximal:* `{alert_row['Proximal']}`\n"
+                        f"🎚️ *Distal:* `{alert_row['Distal']}`\n"
+                        f"📅 *Formed At:* {alert_row['Pattern Time']}"
+                    )
+                    send_telegram_alert(alert_msg)
+                st.info("📢 Fresh zones have been broadcasted to your Telegram Bot successfully!")
+
         m1, m2, m3 = st.columns(3)
         m1.metric("Total Scanned Combos", f"{len(target_symbols)} Assets x {len(selected_tf_labels)} TFs")
         m2.metric("Fresh Active Zones", len(master_df[master_df["Status"] == "Fresh"]))
@@ -269,34 +263,24 @@ if run_scan_btn:
         st.subheader("📋 Core Structural Database Logs")
         st.dataframe(master_df.sort_values(by="Pattern Time", ascending=False), use_container_width=True)
         
-        # Chart Layout (For single stock lookups)
+        # Chart Rendering
         if len(target_symbols) == 1 and not master_df.empty:
             st.subheader(f"📈 Real-time Visual Layer Map ({target_symbols[0]})")
             last_tf_label = selected_tf_labels[-1]
             last_tf_code = timeframe_dictionary[last_tf_label]
-            
-            if last_tf_code in ["5m", "15m", "30m", "45m", "75m", "125m"]:
-                last_fetch, last_period = "5m", "59d"
-            elif last_tf_code in ["1h", "2h", "4h", "5h", "6h", "8h", "10h", "16h"]:
-                last_fetch, last_period = "1h", "360d"
-            else:
-                last_fetch, last_period = "1d", "5y"
+            if last_tf_code in ["5m", "15m", "30m", "45m", "75m", "125m"]: last_fetch, last_period = "5m", "59d"
+            elif last_tf_code in ["1h", "2h", "4h", "5h", "6h", "8h", "10h", "16h"]: last_fetch, last_period = "1h", "360d"
+            else: last_fetch, last_period = "1d", "5y"
             
             try:
-                chart_raw = yf.Ticker(target_symbols[0]).history(period=last_period, interval=last_fetch)
-                chart_feed = resample_data(chart_raw, last_tf_code)
-                
+                chart_feed = resample_data(yf.Ticker(target_symbols[0]).history(period=last_period, interval=last_fetch), last_tf_code)
                 fig = go.Figure(data=[go.Candlestick(x=chart_feed.index, open=chart_feed['Open'], high=chart_feed['High'], low=chart_feed['Low'], close=chart_feed['Close'], name="Price Feed")])
-                
                 for _, row in master_df[master_df["Symbol"] == target_symbols[0]].tail(10).iterrows():
                     shape_color = "rgba(46, 204, 113, 0.14)" if "Demand" in row['Zone Type'] else "rgba(231, 76, 60, 0.14)"
-                    try:
-                        fig.add_shape(type="rect", x0=row['Pattern Time'], y0=row['Distal'], x1=chart_feed.index[-1], y1=row['Proximal'], fillcolor=shape_color, line=dict(width=0))
-                    except Exception:
-                        pass
+                    try: fig.add_shape(type="rect", x0=row['Pattern Time'], y0=row['Distal'], x1=chart_feed.index[-1], y1=row['Proximal'], fillcolor=shape_color, line=dict(width=0))
+                    except: pass
                 fig.update_layout(template="plotly_dark", height=600, xaxis_rangeslider_visible=False)
                 st.plotly_chart(fig, use_container_width=True)
-            except Exception:
-                pass
+            except: pass
     else:
         st.info("No corporate structural clusters detected matching the filter rules with current pipeline settings.")

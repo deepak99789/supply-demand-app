@@ -15,12 +15,12 @@ st.markdown("---")
 # -------------------------------------------------------------------
 # ⚙️ TELEGRAM CONFIGURATION (Apna Token aur Chat ID Yahan Dalein)
 # -------------------------------------------------------------------
-TELEGRAM_TOKEN = "8781917241:AAFfyCdiJRCx321U_kVp0pJAe1fhKYcS5BU"
-TELEGRAM_CHAT_ID = "513065799"
+TELEGRAM_TOKEN = "8781917241:AAFfyCdiJRCx321U_kVp0pJAe1fhKYcS5BU" # <-- Apne bot ka token yahan dalein
+TELEGRAM_CHAT_ID = "513065799" # <-- Apni chat id yahan dalein
 
 def send_telegram_alert(message):
     if TELEGRAM_TOKEN == "YAHAN_APNA_BOT_TOKEN_PASTE_KAREIN" or TELEGRAM_CHAT_ID == "YAHAN_APNI_CHAT_ID_PASTE_KAREIN":
-        return # Agar credentials nahi dale toh alert skip ho jayega
+        return
     try:
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
         payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "Markdown"}
@@ -35,7 +35,7 @@ def get_complete_asset_database():
     return {
         "Indian Stocks (Nifty 100)": [
             "ABB.NS", "ACC.NS", "ADANIENT.NS", "ADANIGREEN.NS", "ADANIPORTS.NS", "ADANIPOWER.NS", "ATGL.NS", "AMBUJACEM.NS", "APOLLOHOSP.NS", "ASHOKLEY.NS",
-            "ASIANPAINT.NS", "ASTRAL.NS", "AU SMALL.NS", "AXISBANK.NS", "BAJAJ-AUTO.NS", "BAJFINANCE.NS", "BAJAJFINSV.NS", "BALKRISIND.NS", "BANDHANBNK.NS", "BANKBARODA.NS",
+            "ASIANPAINT.NS", "ASTRAL.NS", "AXISBANK.NS", "BAJAJ-AUTO.NS", "BAJFINANCE.NS", "BAJAJFINSV.NS", "BALKRISIND.NS", "BANDHANBNK.NS", "BANKBARODA.NS",
             "BERGEPAINT.NS", "BHARATFORG.NS", "BHEL.NS", "BPCL.NS", "BHARTIARTL.NS", "BIOCON.NS", "BOSCHLTD.NS", "BRITANNIA.NS", "CANBK.NS", "CGPOWER.NS",
             "CHOLAMAND.NS", "CIPLA.NS", "COALINDIA.NS", "COFORGE.NS", "COLPAL.NS", "CONCOR.NS", "CUMMINSIND.NS", "DLF.NS", "DABUR.NS", "DIVISLAB.NS",
             "DRREDDY.NS", "EICHERMOT.NS", "GAIL.NS", "GMRINFRA.NS", "GODREJCP.NS", "GODREJPROP.NS", "GRASIM.NS", "HCLTECH.NS", "HDFCBANK.NS", "HDFCLIFE.NS",
@@ -189,7 +189,6 @@ with row2_col2:
 st.markdown("##### 🔍 Quick External Ticker Override")
 quick_search = st.text_input("Type any unique global asset symbol (e.g., GOOG, TCS.NS, ETH-USD):", "").strip()
 
-# Alert Enable Option
 send_alerts = st.checkbox("📢 Send Fresh Zones to Telegram Channel/Bot", value=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
@@ -228,15 +227,13 @@ if run_scan_btn:
                 except Exception:
                     continue
 
-    # Display & Alert Engine
     if all_detected_zones:
         master_df = pd.DataFrame(all_detected_zones)
         if zone_filter_mode != "All":
             master_df = master_df[master_df["Status"] == zone_filter_mode]
             
-        st.success(f"📊 Matrix Sweep Completed! Found {len(master_df)} structure points.")
+        st.success(f"📊 Matrix Sweep Completed! Found {len(master_df)} valid structure points.")
         
-        # Telegram Alert Routing for Fresh Zones
         if send_alerts and not master_df.empty:
             fresh_only_df = master_df[master_df["Status"] == "Fresh"]
             if not fresh_only_df.empty:
@@ -247,7 +244,6 @@ if run_scan_btn:
                         f"{emoji}\n"
                         f"🔹 *Asset:* `{alert_row['Symbol']}`\n"
                         f"⏱️ *Timeframe:* {alert_row['Timeframe']}\n"
-                        f"📐 *Type:* {alert_row['Zone Type']}\n"
                         f"📌 *Proximal:* `{alert_row['Proximal']}`\n"
                         f"🎚️ *Distal:* `{alert_row['Distal']}`\n"
                         f"📅 *Formed At:* {alert_row['Pattern Time']}"
@@ -263,7 +259,6 @@ if run_scan_btn:
         st.subheader("📋 Core Structural Database Logs")
         st.dataframe(master_df.sort_values(by="Pattern Time", ascending=False), use_container_width=True)
         
-        # Chart Rendering
         if len(target_symbols) == 1 and not master_df.empty:
             st.subheader(f"📈 Real-time Visual Layer Map ({target_symbols[0]})")
             last_tf_label = selected_tf_labels[-1]

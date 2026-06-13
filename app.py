@@ -4,68 +4,80 @@ import yfinance as yf
 import plotly.graph_objects as go
 from datetime import datetime
 
-st.set_page_config(layout="wide", page_title="Ultimate Supply/Demand Scanner")
-st.title("⚡ Pro Supply & Demand Scanner (Custom Timeframes)")
+# Full Screen Configuration
+st.set_page_config(layout="wide", page_title="Institutional Supply/Demand Matrix Scanner")
+
+# Centered Title Layout
+st.markdown("<h1 style='text-align: center; color: #2ecc71;'>⚡ Institutional Supply & Demand Matrix Scanner</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #bdc3c7;'>Multi-Asset, Multi-Timeframe Institutional Cluster Intelligence System</p>", unsafe_allow_html=True)
 st.markdown("---")
 
-# 1. Complete Asset Lists (Nifty 100, Nasdaq 100, Forex, Crypto, Commodities)
-def get_asset_lists():
+# -------------------------------------------------------------------
+# 1. 100% COMPLETE ASSETS MASTER DATABASE (Nifty 100, Nasdaq 100, Forex, Crypto, Commodities)
+# -------------------------------------------------------------------
+def get_complete_asset_database():
     return {
         "Indian Stocks (Nifty 100)": [
-            "RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ICICIBANK.NS", "BHARTIARTL.NS", "SBIN.NS", "LTIM.NS", "ITC.NS", "HINDUNILVR.NS",
-            "BAJAJFINSV.NS", "RELIANCE.NS", "AXISBANK.NS", "LT.NS", "KOTAKBANK.NS", "HCLTECH.NS", "M&M.NS", "SUNPHARMA.NS", "MARUTI.NS", "NTPC.NS",
-            "TATAMOTORS.NS", "ONGC.NS", "ADANIENT.NS", "COALINDIA.NS", "JIOFIN.NS", "JSWSTEEL.NS", "HINDALCO.NS", "TATASTEEL.NS", "GRASIM.NS", "POWERGRID.NS"
+            "ABB.NS", "ACC.NS", "ADANIENT.NS", "ADANIGREEN.NS", "ADANIPORTS", "ADANIPOWER.NS", "ATGL.NS", "AMBUJACEM.NS", "APOLLOHOSP.NS", "ASHOKLEY.NS",
+            "ASIANPAINT.NS", "ASTRAL.NS", "AU SMALL.NS", "AXISBANK.NS", "BAJAJ-AUTO.NS", "BAJFINANCE.NS", "BAJAJFINSV.NS", "BALKRISIND.NS", "BANDHANBNK.NS", "BANKBARODA.NS",
+            "BERGEPAINT.NS", "BHARATFORG.NS", "BHEL.NS", "BPCL.NS", "BHARTIARTL.NS", "BIOCON.NS", "BOSCHLTD.NS", "BRITANNIA.NS", "CANBK.NS", "CGPOWER.NS",
+            "CHOLAMAND.NS", "CIPLA.NS", "COALINDIA.NS", "COFORGE.NS", "COLPAL.NS", "CONCOR.NS", "CUMMINSIND.NS", "DLF.NS", "DABUR.NS", "DIVISLAB.NS",
+            "DRREDDY.NS", "EICHERMOT.NS", "GAIL.NS", "GMRINFRA.NS", "GODREJCP.NS", "GODREJPROP.NS", "GRASIM.NS", "HCLTECH.NS", "HDFCBANK.NS", "HDFCLIFE.NS",
+            "HAVELLS.NS", "HEROMOTOCO.NS", "HINDALCO.NS", "HAL.NS", "HINDUNILVR.NS", "ICICIBANK.NS", "ICICIGI.NS", "ICICIPRULI.NS", "IDFCFIRSTB.NS", "ITC.NS",
+            "INDIANB.NS", "INDHOTEL.NS", "IOC.NS", "IRCTC.NS", "IRFC.NS", "IGL.NS", "INDUSTOWER.NS", "INDUSINDBK.NS", "INFY.NS", "INTERGLOBE.NS",
+            "JINDALSTEL.NS", "JIOFIN.NS", "JSWSTEEL.NS", "JUBLFOOD.NS", "KPITTECH.NS", "KOTAKBANK.NS", "L&TFH.NS", "LT.NS", "LTIM.NS", "LICHSGFIN.NS",
+            "LUPIN.NS", "M&M.NS", "MARICO.NS", "MARUTI.NS", "MAXHEALTH.NS", "NTPC.NS", "NESTLEIND.NS", "OBEROIRLTY.NS", "ONGC.NS", "OIL.NS",
+            "PIIND.NS", "PFC.NS", "POWERGRID.NS", "PNB.NS", "RELIANCE.NS", "SBICARD.NS", "SBILIFE.NS", "SRF.NS", "MOTHERSON.NS", "SHREECEM.NS",
+            "SHRIRAMFIN.NS", "SIEMENS.NS", "SONACOMS.NS", "SBIN.NS", "SUNPHARMA.NS", "SUNTV.NS", "SUPREMEIND.NS", "SUZLON.NS", "TATACOMM.NS", "TATACONSUM.NS",
+            "TATAELXSI.NS", "TATAMOTORS.NS", "TATAPOWER.NS", "TATASTEEL.NS", "TCS.NS", "TECHM.NS", "TITAN.NS", "TORNTPHARM.NS", "TRENT.NS", "TIINDIA.NS",
+            "UPL.NS", "ULTRACEMCO.NS", "UNITDSPR.NS", "VBL.NS", "VEDL", "VOLTAS.NS", "WIPRO.NS", "YESBANK.NS", "ZOMATO.NS"
         ],
         "US Stocks (Nasdaq 100)": [
-            "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "PEP", "COST", "AVGO",
-            "CSCO", "TMUS", "ADBE", "NFLX", "AMD", "CMCSA", "TXN", "QCOM", "INTC", "HON",
-            "AMGN", "ISRG", "BKNG", "MDLZ", "VRTX", "GILD", "REGN", "ADP", "PANW", "MU"
+            "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "AVGO", "PEP", "COST",
+            "CSCO", "TMUS", "ADBE", "NFLX", "AMD", "CMCSA", "TXN", "QCOM", "INTC", "AMGN",
+            "ISRG", "HON", "BKNG", "MDLZ", "VRTX", "GILD", "ADP", "REGN", "PANW", "MU",
+            "LRCX", "MELI", "SNPS", "KLAC", "CDNS", "CHTR", "MAR", "ORLY", "ASML", "NXPI",
+            "CTAS", "WDAY", "MNST", "ROST", "ADSK", "PDD", "PAYX", "PCAR", "ILMN", "SGEN",
+            "DLTR", "AEP", "ODFL", "AZN", "EXC", "IDXX", "KDP", "LULU", "BIIB", "MCHP",
+            "FAST", "CSX", "FITB", "VRSK", "GEHC", "TEAM", "ANSS", "DXCM", "DDOG", "FANG",
+            "WBD", "ALGN", "CEG", "SIRI", "ZM", "ILMN", "EBAY", "JD", "LCID", "DDOG",
+            "ABNB", "ZS", "GFS", "SPLK", "NXPI", "MTCH", "MRVL", "OKTA", "SWKS", "NTES",
+            "DOCU", "AMAT", "EA", "CTSH", "CZR", "MNDY", "PDD", "COIN", "HOOD", "ARM"
         ],
-        "Forex (Major/Minor/Cross)": [
+        "Forex (Majors, Minors & Crosses)": [
             "EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X", "USDCAD=X", "NZDUSD=X", "USDCHF=X",
-            "EURGBP=X", "EURJPY=X", "GBPJPY=X", "AUDJPY=X", "EURCAD=X", "EURCHF=X", "GBPCAD=X"
+            "EURGBP=X", "EURJPY=X", "GBPJPY=X", "AUDJPY=X", "EURCAD=X", "EURCHF=X", "GBPCAD=X",
+            "CHFJPY=X", "NZDJPY=X", "CADJPY=X", "AUDCAD=X", "AUDCHF=X", "AUDNZD=X", "EURAUD=X",
+            "EURNZD=X", "GBPAUD=X", "GBPNZD=X", "GBPCHF=X", "GBPCAD=X", "CADCHF=X", "NZDCHF=X"
         ],
         "Crypto": [
-            "BTC-USD", "ETH-USD", "SOL-USD", "DOGE-USD", "BNB-USD", "ADA-USD", "XRP-USD", "DOT-USD", "SHIB-USD", "LTC-USD"
+            "BTC-USD", "ETH-USD", "SOL-USD", "DOGE-USD", "BNB-USD", "ADA-USD", "XRP-USD", "DOT-USD", "SHIB-USD", "LTC-USD", "LINK-USD", "AVAX-USD", "MATIC-USD"
         ],
         "Commodities": [
-            "GC=F", "CL=F", "SI=F", "NG=F", "BZ=F", "HG=F", "ZC=F", "ZO=F"
+            "GC=F", "CL=F", "SI=F", "NG=F", "BZ=F", "HG=F", "ZC=F", "ZO=F", "PL=F", "PA=F"
         ]
     }
 
-assets_dict = get_asset_lists()
+assets_master = get_complete_asset_database()
 
-# 2. Resampling Engine for Custom Timeframes
+# Resampling Algorithm
 def resample_data(df, timeframe_str):
     if timeframe_str in ['5m', '15m', '30m', '1h', '1d', '1wk']:
         return df
-        
     resample_map = {
         "45m": "45T", "75m": "75T", "125m": "125T", 
         "2h": "120T", "4h": "240T", "5h": "300T", 
         "6h": "360T", "8h": "480T", "10h": "600T", "16h": "960T"
     }
-    
     rule = resample_map.get(timeframe_str)
-    if not rule:
-        return df
-        
-    resampled = df.resample(rule).agg({
-        'Open': 'first',
-        'High': 'max',
-        'Low': 'min',
-        'Close': 'last',
-        'Volume': 'sum'
-    }).dropna()
-    
-    return resampled
+    if not rule: return df
+    return df.resample(rule).agg({'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'}).dropna()
 
-# 3. Supply & Demand Zone Core Algorithm
-def identify_zones(df):
+# S&D Core Processing Algorithm
+def scan_supply_demand_zones(df, symbol_name, tf_name):
     zones = []
-    if len(df) < 10:
-        return pd.DataFrame()
-        
+    if len(df) < 10: return zones
+    
     df['candle_size'] = (df['High'] - df['Low']).abs()
     df['body_size'] = (df['Close'] - df['Open']).abs()
     df['is_green'] = df['Close'] > df['Open']
@@ -78,56 +90,45 @@ def identify_zones(df):
             legout_idx = i + num_base
             follow_up_idx = legout_idx + 1
             
-            if follow_up_idx >= len(df):
-                continue
+            if follow_up_idx >= len(df): continue
                 
             legin = df.iloc[legin_idx]
             legout = df.iloc[legout_idx]
             follow_up = df.iloc[follow_up_idx]
             bases = df.iloc[base_indices]
             
-            # Condition 1: Explosive Check (>60% Body)
-            if legin['body_ratio'] < 60 or legout['body_ratio'] < 60:
-                continue
-                
-            # Condition 2: Base Candle Body <= 50% of Legin Body
+            if legin['body_ratio'] < 60 or legout['body_ratio'] < 60: continue
+            
             valid_bases = True
             for _, base in bases.iterrows():
                 if base['body_size'] > (legin['body_size'] * 0.5):
                     valid_bases = False
                     break
-            if not valid_bases:
-                continue
+            if not valid_bases: continue
                 
-            # Condition 3: Legout Body Size > Legin Body Size & Same color Follow-up
-            if legout['body_size'] <= legin['body_size']:
-                continue
-            if legout['is_green'] != follow_up['is_green']:
-                continue
+            if legout['body_size'] <= legin['body_size']: continue
+            if legout['is_green'] != follow_up['is_green']: continue
                 
-            # Zone Strategy Mapping
-            legin_green = legin['is_green']
-            legout_green = legout['is_green']
+            legin_green, legout_green = legin['is_green'], legout['is_green']
             zone_type, proximal, distal = None, 0.0, 0.0
             
             if legin_green and legout_green:
-                zone_type = "RBR (Rally-Base-Rally) - Demand"
+                zone_type = "RBR (Demand)"
                 proximal = bases['High'].max()
                 distal = bases['Low'].min()
             elif legin_green and not legout_green:
-                zone_type = "RBD (Rally-Base-Drop) - Supply"
+                zone_type = "RBD (Supply)"
                 proximal = bases['Low'].min()
                 distal = bases['High'].max()
             elif not legin_green and legout_green:
-                zone_type = "DBR (Drop-Base-Rally) - Demand"
+                zone_type = "DBR (Demand)"
                 proximal = bases['High'].max()
                 distal = bases['Low'].min()
             elif not legin_green and not legout_green:
-                zone_type = "DBD (Drop-Base-Drop) - Supply"
+                zone_type = "DBD (Supply)"
                 proximal = bases['Low'].min()
                 distal = bases['High'].max()
                 
-            # Fresh vs Tested Scanning Engine
             tested = False
             for j in range(follow_up_idx + 1, len(df)):
                 if "Demand" in zone_type and df.iloc[j]['Low'] <= proximal:
@@ -138,98 +139,120 @@ def identify_zones(df):
                     break
                     
             zones.append({
-                "Time": df.index[i].strftime('%Y-%m-%d %H:%M'),
-                "Type": zone_type,
-                "Proximal": round(proximal, 4),
-                "Distal": round(distal, 4),
-                "Status": "Tested" if tested else "Fresh",
-                "Base Candles": num_base
+                "Symbol": symbol_name, "Timeframe": tf_name, "Pattern Time": df.index[i].strftime('%Y-%m-%d %H:%M'),
+                "Zone Type": zone_type, "Proximal": round(proximal, 4), "Distal": round(distal, 4),
+                "Status": "Tested" if tested else "Fresh", "Base Count": num_base
             })
-            
-    return pd.DataFrame(zones)
+    return zones
 
-# Sidebar Configuration
-st.sidebar.header("🛠️ System Configuration")
-market_type = st.sidebar.selectbox("Market Category", list(assets_dict.keys()))
-selected_symbol = st.sidebar.selectbox("Select Symbol from List", assets_dict[market_type])
+# -------------------------------------------------------------------
+# MAIN CENTER SCREEN CONTROL PANEL LAYOUT
+# -------------------------------------------------------------------
+st.markdown("### 🎛️ Scanner Control Matrix")
 
-timeframe_opts = {
-    "5 Min": "5m", "15 Min": "15m", "30 Min": "30m", "45 Min": "45m",
-    "75 Min": "75m", "125 Min": "125m", "1 Hour": "1h", "2 Hour": "2h",
-    "4 Hour": "4h", "5 Hour": "5h", "6 Hour": "6h", "8 Hour": "8h",
+# Row 1: Category and Symbol Selectors
+row1_col1, row1_col2 = st.columns(2)
+with row1_col1:
+    market_cat = st.selectbox("1. Choose Market Category", list(assets_master.keys()))
+with row1_col2:
+    symbols_options = ["🎨 [ALL SYMBOLS]"] + assets_master[market_cat]
+    selected_symbol_raw = st.selectbox("2. Select Target Ticker / Pair List", symbols_options)
+
+# Row 2: Multi-Timeframes & Filters
+row2_col1, row2_col2 = st.columns(2)
+timeframe_dictionary = {
+    "5 Min": "5m", "15 Min": "15m", "30 Min": "30m", "45 Min": "45m", "75 Min": "75m", "125 Min": "125m",
+    "1 Hour": "1h", "2 Hour": "2h", "4 Hour": "4h", "5 Hour": "5h", "6 Hour": "6h", "8 Hour": "8h",
     "10 Hour": "10h", "16 Hour": "16h", "Daily": "1d", "Weekly": "1wk"
 }
-selected_tf_label = st.sidebar.selectbox("Select Timeframe", list(timeframe_opts.keys()))
-selected_tf = timeframe_opts[selected_tf_label]
-zone_filter = st.sidebar.radio("Zone Filter Mode", ["All", "Fresh", "Tested"])
 
-# Global Search Bar on Main Screen
-st.subheader("🔍 Universal Asset Search")
-search_query = st.text_input("Directly input any Ticker Symbol (eg: SBIN.NS, AAPL, BTC-USD, GC=F):", value=selected_symbol)
-active_symbol = search_query.strip() if search_query else selected_symbol
+with row2_col1:
+    selected_tf_labels = st.multiselect("3. Select Timeframes (Choose Multiple to Scan at Once)", list(timeframe_dictionary.keys()), default=["1 Hour"])
+with row2_col2:
+    zone_filter_mode = st.radio("4. Target Zone Integrity Condition", ["All", "Fresh", "Tested"], horizontal=True)
 
-if active_symbol:
-    with st.spinner(f"Fetching market feed and scanning structural zones for {active_symbol}..."):
-        try:
-            # Smart period strategy based on timeframe requirements
-            if selected_tf in ["5m", "15m", "30m", "45m", "75m", "125m"]:
-                fetch_tf = "5m"
-                period = "60d"
-            elif selected_tf in ["1h", "2h", "4h", "5h", "6h", "8h", "10h", "16h"]:
-                fetch_tf = "1h"
-                period = "730d"
-            else:
-                fetch_tf = selected_tf
-                period = "5y"
+# Universal Global Dynamic Input Search Bar
+st.markdown("##### 🔍 Quick External Ticker Override")
+quick_search = st.text_input("Type any unique global asset symbol (Overrides above selections, e.g., GOOG, TCS.NS, ETH-USD):", "").strip()
+
+# --- THE MANUAL RUN BUTTON ---
+st.markdown("<br>", unsafe_allow_html=True)
+run_scan_btn = st.button("🚀 START STRUCTURAL MATRIX SCAN", use_container_width=True)
+st.markdown("---")
+
+# -------------------------------------------------------------------
+# EXECUTION ENGINE PIPELINE
+# -------------------------------------------------------------------
+if run_scan_btn:
+    # Finalize Target Symbols List
+    if quick_search:
+        target_symbols = [quick_search]
+    elif selected_symbol_raw == "🎨 [ALL SYMBOLS]":
+        target_symbols = assets_master[market_cat]
+    else:
+        target_symbols = [selected_symbol_raw]
+        
+    all_detected_zones = []
+    
+    with st.spinner("Executing structural wave analysis over cloud data streams..."):
+        for symbol in target_symbols:
+            for tf_label in selected_tf_labels:
+                tf_code = timeframe_dictionary[tf_label]
                 
-            df_raw = yf.Ticker(active_symbol).history(period=period, interval=fetch_tf)
+                # Fetch Logic Routing
+                fetch_interval = "5m" if tf_code in ["5m", "15m", "30m", "45m", "75m", "125m"] else ("1h" if "h" in tf_code else tf_code)
+                history_period = "60d" if "m" in fetch_interval or "h" in fetch_interval else "5y"
+                
+                try:
+                    raw_feed = yf.Ticker(symbol).history(period=history_period, interval=fetch_interval)
+                    if raw_feed.empty: continue
+                    
+                    processed_feed = resample_data(raw_feed, tf_code)
+                    zone_logs = scan_supply_demand_zones(processed_feed, symbol, tf_label)
+                    all_detected_zones.extend(zone_logs)
+                except Exception:
+                    continue # Skip silently if yfinance rate limit or error hits on 'All' mode
+
+    # Display Engine
+    if all_detected_zones:
+        master_df = pd.DataFrame(all_detected_zones)
+        
+        # Apply Integrity Conditions
+        if zone_filter_mode != "All":
+            master_df = master_df[master_df["Status"] == zone_filter_mode]
             
-            if not df_raw.empty:
-                df_processed = resample_data(df_raw, selected_tf)
-                zones_df = identify_zones(df_processed)
-                
-                if zone_filter != "All" and not zones_df.empty:
-                    zones_df = zones_df[zones_df["Status"] == zone_filter]
-                    
-                # Technical Dashboard Metrics
-                c1, c2, c3 = st.columns(3)
-                c1.metric("Total Candlesticks Scanned", len(df_processed))
-                if not zones_df.empty:
-                    c2.metric("Total Fresh Zones Active", len(zones_df[zones_df["Status"] == "Fresh"]))
-                    c3.metric("Total Tested Zones Active", len(zones_df[zones_df["Status"] == "Tested"]))
-                else:
-                    c2.metric("Total Fresh Zones Active", 0)
-                    c3.metric("Total Tested Zones Active", 0)
-
-                # Plotly Chart Interface
-                fig = go.Figure(data=[go.Candlestick(
-                    x=df_processed.index, 
-                    open=df_processed['Open'], high=df_processed['High'], 
-                    low=df_processed['Low'], close=df_processed['Close'], 
-                    name="Price Pattern"
-                )])
-                
-                # Highlight zones dynamically on chart canvas
-                if not zones_df.empty:
-                    for _, row in zones_df.tail(8).iterrows():
-                        color = "rgba(46, 204, 113, 0.15)" if "Demand" in row['Type'] else "rgba(231, 76, 60, 0.15)"
-                        fig.add_shape(
-                            type="rect", 
-                            x0=row['Time'], y0=row['Distal'], 
-                            x1=df_processed.index[-1], y1=row['Proximal'], 
-                            fillcolor=color, line=dict(width=0)
-                        )
-                    
-                fig.update_layout(template="plotly_dark", height=600, xaxis_rangeslider_visible=False)
-                st.plotly_chart(fig, use_container_width=True)
-                
-                # Dynamic Table Engine
-                st.subheader("📋 Core Zone Database Logs")
-                if not zones_df.empty:
-                    st.dataframe(zones_df.sort_values(by="Time", ascending=False), use_container_width=True)
-                else:
-                    st.info(f"No custom structural patterns detected for {zone_filter} filter rules currently.")
-            else:
-                st.error("No trading structural history received from data stream. Please verify ticker notation.")
-        except Exception as err:
-            st.error(f"Execution Error inside Data Engine: {err}")
+        st.success(f"📊 Matrix Sweep Completed! Found {len(master_df)} valid structure points.")
+        
+        # Main Metrics
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Total Scanned Combos", f"{len(target_symbols)} Assets x {len(selected_tf_labels)} TFs")
+        m2.metric("Fresh Active Zones", len(master_df[master_df["Status"] == "Fresh"]))
+        m3.metric("Tested Zones Logged", len(master_df[master_df["Status"] == "Tested"]))
+        
+        # Data View Matrix Table
+        st.subheader("📋 Core Structural Database Logs")
+        st.dataframe(master_df.sort_values(by="Pattern Time", ascending=False), use_container_width=True)
+        
+        # Dynamic Interactive Chart Canvas Rendering (For Single Asset Mode)
+        if len(target_symbols) == 1 and not master_df.empty:
+            st.subheader(f"📈 Real-time Visual Layer Map ({target_symbols[0]})")
+            # Pulling chart template from last executed timeframe for visual layout
+            last_tf_label = selected_tf_labels[-1]
+            last_tf_code = timeframe_dictionary[last_tf_label]
+            last_fetch = "5m" if last_tf_code in ["5m", "15m", "30m", "45m", "75m", "125m"] else ("1h" if "h" in last_tf_code else last_tf_code)
+            last_period = "60d" if "m" in last_fetch or "h" in last_fetch else "5y"
+            
+            chart_feed = resample_data(yf.Ticker(target_symbols[0]).history(period=last_period, interval=last_fetch), last_tf_code)
+            
+            fig = go.Figure(data=[go.Candlestick(x=chart_feed.index, open=chart_feed['Open'], high=chart_feed['High'], low=chart_feed['Low'], close=chart_feed['Close'], name="Price Feed")])
+            
+            for _, row in master_df[master_df["Symbol"] == target_symbols[0]].tail(10).iterrows():
+                shape_color = "rgba(46, 204, 113, 0.14)" if "Demand" in row['Zone Type'] else "rgba(231, 76, 60, 0.14)"
+                try:
+                    fig.add_shape(type="rect", x0=row['Pattern Time'], y0=row['Distal'], x1=chart_feed.index[-1], y1=row['Proximal'], fillcolor=shape_color, line=dict(width=0))
+                except Exception:
+                    pass
+            fig.update_layout(template="plotly_dark", height=600, xaxis_rangeslider_visible=False)
+            st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("No corporate structural clusters detected matching the filter rules with current pipeline settings.")

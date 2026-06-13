@@ -18,7 +18,7 @@ st.markdown("---")
 def get_complete_asset_database():
     return {
         "Indian Stocks (Nifty 100)": [
-            "ABB.NS", "ACC.NS", "ADANIENT.NS", "ADANIGREEN.NS", "ADANIPORTS", "ADANIPOWER.NS", "ATGL.NS", "AMBUJACEM.NS", "APOLLOHOSP.NS", "ASHOKLEY.NS",
+            "ABB.NS", "ACC.NS", "ADANIENT.NS", "ADANIGREEN.NS", "ADANIPORTS.NS", "ADANIPOWER.NS", "ATGL.NS", "AMBUJACEM.NS", "APOLLOHOSP.NS", "ASHOKLEY.NS",
             "ASIANPAINT.NS", "ASTRAL.NS", "AU SMALL.NS", "AXISBANK.NS", "BAJAJ-AUTO.NS", "BAJFINANCE.NS", "BAJAJFINSV.NS", "BALKRISIND.NS", "BANDHANBNK.NS", "BANKBARODA.NS",
             "BERGEPAINT.NS", "BHARATFORG.NS", "BHEL.NS", "BPCL.NS", "BHARTIARTL.NS", "BIOCON.NS", "BOSCHLTD.NS", "BRITANNIA.NS", "CANBK.NS", "CGPOWER.NS",
             "CHOLAMAND.NS", "CIPLA.NS", "COALINDIA.NS", "COFORGE.NS", "COLPAL.NS", "CONCOR.NS", "CUMMINSIND.NS", "DLF.NS", "DABUR.NS", "DIVISLAB.NS",
@@ -30,25 +30,25 @@ def get_complete_asset_database():
             "PIIND.NS", "PFC.NS", "POWERGRID.NS", "PNB.NS", "RELIANCE.NS", "SBICARD.NS", "SBILIFE.NS", "SRF.NS", "MOTHERSON.NS", "SHREECEM.NS",
             "SHRIRAMFIN.NS", "SIEMENS.NS", "SONACOMS.NS", "SBIN.NS", "SUNPHARMA.NS", "SUNTV.NS", "SUPREMEIND.NS", "SUZLON.NS", "TATACOMM.NS", "TATACONSUM.NS",
             "TATAELXSI.NS", "TATAMOTORS.NS", "TATAPOWER.NS", "TATASTEEL.NS", "TCS.NS", "TECHM.NS", "TITAN.NS", "TORNTPHARM.NS", "TRENT.NS", "TIINDIA.NS",
-            "UPL.NS", "ULTRACEMCO.NS", "UNITDSPR.NS", "VBL.NS", "VEDL", "VOLTAS.NS", "WIPRO.NS", "YESBANK.NS", "ZOMATO.NS"
+            "UPL.NS", "ULTRACEMCO.NS", "UNITDSPR.NS", "VBL.NS", "VEDL.NS", "VOLTAS.NS", "WIPRO.NS", "YESBANK.NS", "ZOMATO.NS"
         ],
         "US Stocks (Nasdaq 100)": [
             "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "AVGO", "PEP", "COST",
             "CSCO", "TMUS", "ADBE", "NFLX", "AMD", "CMCSA", "TXN", "QCOM", "INTC", "AMGN",
             "ISRG", "HON", "BKNG", "MDLZ", "VRTX", "GILD", "ADP", "REGN", "PANW", "MU",
             "LRCX", "MELI", "SNPS", "KLAC", "CDNS", "CHTR", "MAR", "ORLY", "ASML", "NXPI",
-            "CTAS", "WDAY", "MNST", "ROST", "ADSK", "PDD", "PAYX", "PCAR", "ILMN", "SGEN",
+            "CTAS", "WDAY", "MNST", "ROST", "ADSK", "PDD", "PAYX", "PCAR", "ILMN", "GEHC",
             "DLTR", "AEP", "ODFL", "AZN", "EXC", "IDXX", "KDP", "LULU", "BIIB", "MCHP",
-            "FAST", "CSX", "FITB", "VRSK", "GEHC", "TEAM", "ANSS", "DXCM", "DDOG", "FANG",
-            "WBD", "ALGN", "CEG", "SIRI", "ZM", "ILMN", "EBAY", "JD", "LCID", "DDOG",
-            "ABNB", "ZS", "GFS", "SPLK", "NXPI", "MTCH", "MRVL", "OKTA", "SWKS", "NTES",
-            "DOCU", "AMAT", "EA", "CTSH", "CZR", "MNDY", "PDD", "COIN", "HOOD", "ARM"
+            "FAST", "CSX", "FITB", "VRSK", "TEAM", "ANSS", "DXCM", "DDOG", "FANG",
+            "WBD", "ALGN", "CEG", "SIRI", "ZM", "EBAY", "JD", "LCID", "ABNB", "ZS", 
+            "GFS", "MRVL", "OKTA", "SWKS", "NTES", "DOCU", "AMAT", "EA", "CTSH", "CZR", 
+            "MNDY", "COIN", "HOOD", "ARM"
         ],
         "Forex (Majors, Minors & Crosses)": [
             "EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X", "USDCAD=X", "NZDUSD=X", "USDCHF=X",
             "EURGBP=X", "EURJPY=X", "GBPJPY=X", "AUDJPY=X", "EURCAD=X", "EURCHF=X", "GBPCAD=X",
             "CHFJPY=X", "NZDJPY=X", "CADJPY=X", "AUDCAD=X", "AUDCHF=X", "AUDNZD=X", "EURAUD=X",
-            "EURNZD=X", "GBPAUD=X", "GBPNZD=X", "GBPCHF=X", "GBPCAD=X", "CADCHF=X", "NZDCHF=X"
+            "EURNZD=X", "GBPAUD=X", "GBPNZD=X", "GBPCHF=X", "CADCHF=X", "NZDCHF=X"
         ],
         "Crypto": [
             "BTC-USD", "ETH-USD", "SOL-USD", "DOGE-USD", "BNB-USD", "ADA-USD", "XRP-USD", "DOT-USD", "SHIB-USD", "LTC-USD", "LINK-USD", "AVAX-USD", "MATIC-USD"
@@ -199,9 +199,16 @@ if run_scan_btn:
             for tf_label in selected_tf_labels:
                 tf_code = timeframe_dictionary[tf_label]
                 
-                # Fetch Logic Routing
-                fetch_interval = "5m" if tf_code in ["5m", "15m", "30m", "45m", "75m", "125m"] else ("1h" if "h" in tf_code else tf_code)
-                history_period = "60d" if "m" in fetch_interval or "h" in fetch_interval else "5y"
+                # --- BULLETPROOF FIXED TIME-PERIOD STRATEGY FOR ALL TIMEFRAMES ---
+                if tf_code in ["5m", "15m", "30m", "45m", "75m", "125m"]:
+                    fetch_interval = "5m"
+                    history_period = "30d"  # Safest limit for 5m data download
+                elif tf_code in ["1h", "2h", "4h", "5h", "6h", "8h", "10h", "16h"]:
+                    fetch_interval = "1h"
+                    history_period = "360d" # Safe 1-Year limit: Fixes 2h, 4h, 8h, 10h completely
+                else:
+                    fetch_interval = "1d"
+                    history_period = "5y"   # Perfect for Daily and Weekly
                 
                 try:
                     raw_feed = yf.Ticker(symbol).history(period=history_period, interval=fetch_interval)
@@ -211,7 +218,7 @@ if run_scan_btn:
                     zone_logs = scan_supply_demand_zones(processed_feed, symbol, tf_label)
                     all_detected_zones.extend(zone_logs)
                 except Exception:
-                    continue # Skip silently if yfinance rate limit or error hits on 'All' mode
+                    continue # Skip silently to handle errors smoothly
 
     # Display Engine
     if all_detected_zones:
@@ -236,23 +243,32 @@ if run_scan_btn:
         # Dynamic Interactive Chart Canvas Rendering (For Single Asset Mode)
         if len(target_symbols) == 1 and not master_df.empty:
             st.subheader(f"📈 Real-time Visual Layer Map ({target_symbols[0]})")
-            # Pulling chart template from last executed timeframe for visual layout
             last_tf_label = selected_tf_labels[-1]
             last_tf_code = timeframe_dictionary[last_tf_label]
-            last_fetch = "5m" if last_tf_code in ["5m", "15m", "30m", "45m", "75m", "125m"] else ("1h" if "h" in last_tf_code else last_tf_code)
-            last_period = "60d" if "m" in last_fetch or "h" in last_fetch else "5y"
             
-            chart_feed = resample_data(yf.Ticker(target_symbols[0]).history(period=last_period, interval=last_fetch), last_tf_code)
+            if last_tf_code in ["5m", "15m", "30m", "45m", "75m", "125m"]:
+                last_fetch = "5m"
+                last_period = "30d"
+            elif last_tf_code in ["1h", "2h", "4h", "5h", "6h", "8h", "10h", "16h"]:
+                last_fetch = "1h"
+                last_period = "360d"
+            else:
+                last_fetch = "1d"
+                last_period = "5y"
             
-            fig = go.Figure(data=[go.Candlestick(x=chart_feed.index, open=chart_feed['Open'], high=chart_feed['High'], low=chart_feed['Low'], close=chart_feed['Close'], name="Price Feed")])
-            
-            for _, row in master_df[master_df["Symbol"] == target_symbols[0]].tail(10).iterrows():
-                shape_color = "rgba(46, 204, 113, 0.14)" if "Demand" in row['Zone Type'] else "rgba(231, 76, 60, 0.14)"
-                try:
-                    fig.add_shape(type="rect", x0=row['Pattern Time'], y0=row['Distal'], x1=chart_feed.index[-1], y1=row['Proximal'], fillcolor=shape_color, line=dict(width=0))
-                except Exception:
-                    pass
-            fig.update_layout(template="plotly_dark", height=600, xaxis_rangeslider_visible=False)
-            st.plotly_chart(fig, use_container_width=True)
+            try:
+                chart_feed = resample_data(yf.Ticker(target_symbols[0]).history(period=last_period, interval=last_fetch), last_tf_code)
+                fig = go.Figure(data=[go.Candlestick(x=chart_feed.index, open=chart_feed['Open'], high=chart_feed['High'], low=chart_feed['Low'], close=chart_feed['Close'], name="Price Feed")])
+                
+                for _, row in master_df[master_df["Symbol"] == target_symbols[0]].tail(10).iterrows():
+                    shape_color = "rgba(46, 204, 113, 0.14)" if "Demand" in row['Zone Type'] else "rgba(231, 76, 60, 0.14)"
+                    try:
+                        fig.add_shape(type="rect", x0=row['Pattern Time'], y0=row['Distal'], x1=chart_feed.index[-1], y1=row['Proximal'], fillcolor=shape_color, line=dict(width=0))
+                    except Exception:
+                        pass
+                fig.update_layout(template="plotly_dark", height=600, xaxis_rangeslider_visible=False)
+                st.plotly_chart(fig, use_container_width=True)
+            except Exception:
+                pass
     else:
         st.info("No corporate structural clusters detected matching the filter rules with current pipeline settings.")

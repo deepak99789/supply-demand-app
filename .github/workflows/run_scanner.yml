@@ -1,8 +1,8 @@
-name: Daily Market Zone Scanner
+name: Hourly Market Zone Scanner
 on:
   schedule:
-    - cron: '0 18 * * *' # Har roz Indian time ke mutabik raat ko 11:30 baje auto-run hoga
-  workflow_dispatch: # Isse aap jab chahein button daba kar bhi run kar sakte hain
+    - cron: '0 * * * *' # Yeh har ghante automatic run hoga
+  workflow_dispatch: # Isse aap jab chahein manually bhi run kar sakte hain
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,14 +17,7 @@ jobs:
         python-version: '3.9'
     - name: Install Dependencies
       run: |
-        pip install pandas yfinance
+        pip install pandas yfinance requests
     - name: Run Scanner Pipeline
       run: |
         python pipeline.py
-    - name: Commit and Push if Changes Found
-      run: |
-        git config --global user.name 'GitHub Action Bot'
-        git config --global user.email 'action@github.com'
-        git add market_zones.json
-        git commit -m "Auto-updated Market Zones Data" || exit 0
-        git push

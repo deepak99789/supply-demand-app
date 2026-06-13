@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import yfinance as yf
 import plotly.graph_objects as go
-from datetime import datetime
 
 # Full Screen Configuration
 st.set_page_config(layout="wide", page_title="Institutional Supply/Demand Matrix Scanner")
@@ -13,7 +12,7 @@ st.markdown("<p style='text-align: center; color: #bdc3c7;'>Multi-Asset, Multi-T
 st.markdown("---")
 
 # -------------------------------------------------------------------
-# 1. 100% COMPLETE ASSETS MASTER DATABASE (Nifty 100, Nasdaq 100, Forex, Crypto, Commodities)
+# 1. COMPLETE ASSETS MASTER DATABASE
 # -------------------------------------------------------------------
 def get_complete_asset_database():
     return {
@@ -60,24 +59,49 @@ def get_complete_asset_database():
 
 assets_master = get_complete_asset_database()
 
-# Resampling Algorithm
+# -------------------------------------------------------------------
+# FIXED RESAMPLING ENGINE (Timezone Bug Fixed)
+# -------------------------------------------------------------------
 def resample_data(df, timeframe_str):
+    if df.empty:
+        return df
+        
+    # Sabse pehle Timezone ko hatana zaroori hai varna Pandas resample fail ho jata hai
+    df = df.copy()
+    if df.index.tz is not None:
+        df.index = df.index.tz_localize(None)
+        
     if timeframe_str in ['5m', '15m', '30m', '1h', '1d', '1wk']:
         return df
+        
     resample_map = {
-        "45m": "45T", "75m": "75T", "125m": "125T", 
-        "2h": "120T", "4h": "240T", "5h": "300T", 
-        "6h": "360T", "8h": "480T", "10h": "600T", "16h": "960T"
+        "45m": "45min", "75m": "75min", "125m": "125min", 
+        "2h": "2h", "4h": "4h", "5h": "5h", 
+        "6h": "6h", "8h": "8h", "10h": "10h", "16h": "16h"
     }
     rule = resample_map.get(timeframe_str)
-    if not rule: return df
-    return df.resample(rule).agg({'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'}).dropna()
+    if not rule: 
+        return df
+        
+    resampled = df.resample(rule).agg({
+        'Open': 'first', 
+        'High': 'max', 
+        'Low': 'min', 
+        'Close': 'last', 
+        'Volume': 'sum'
+    }).dropna()
+    
+    return resampled
 
-# S&D Core Processing Algorithm
+# -------------------------------------------------------------------
+# S&D CORE SCANNING ENGINE
+# -------------------------------------------------------------------
 def scan_supply_demand_zones(df, symbol_name, tf_name):
     zones = []
-    if len(df) < 10: return zones
+    if len(df) < 10: 
+        return zones
     
+    df = df.copy()
     df['candle_size'] = (df['High'] - df['Low']).abs()
     df['body_size'] = (df['Close'] - df['Open']).abs()
     df['is_green'] = df['Close'] > df['Open']
@@ -90,24 +114,32 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
             legout_idx = i + num_base
             follow_up_idx = legout_idx + 1
             
-            if follow_up_idx >= len(df): continue
+            if follow_up_idx >= len(df): 
+                continue
                 
             legin = df.iloc[legin_idx]
             legout = df.iloc[legout_idx]
             follow_up = df.iloc[follow_up_idx]
             bases = df.iloc[base_indices]
             
-            if legin['body_ratio'] < 60 or legout['body_ratio'] < 60: continue
+            # Condition 1: Explosive Check (>60% Body)
+            if legin['body_ratio'] < 60 or legout['body_ratio'] < 60: 
+                continue
             
+            # Condition 2: Base Candle Body <= 50% of Legin Body
             valid_bases = True
             for _, base in bases.iterrows():
                 if base['body_size'] > (legin['body_size'] * 0.5):
                     valid_bases = False
                     break
-            if not valid_bases: continue
+            if not valid_bases: 
+                continue
                 
-            if legout['body_size'] <= legin['body_size']: continue
-            if legout['is_green'] != follow_up['is_green']: continue
+            # Condition 3: Legout > Legin & Follow-up color check
+            if legout['body_size'] <= legin['body_size']: 
+                continue
+            if legout['is_green'] != follow_up['is_green']: 
+                continue
                 
             legin_green, legout_green = legin['is_green'], legout['is_green']
             zone_type, proximal, distal = None, 0.0, 0.0
@@ -150,7 +182,6 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
 # -------------------------------------------------------------------
 st.markdown("### 🎛️ Scanner Control Matrix")
 
-# Row 1: Category and Symbol Selectors
 row1_col1, row1_col2 = st.columns(2)
 with row1_col1:
     market_cat = st.selectbox("1. Choose Market Category", list(assets_master.keys()))
@@ -158,7 +189,6 @@ with row1_col2:
     symbols_options = ["🎨 [ALL SYMBOLS]"] + assets_master[market_cat]
     selected_symbol_raw = st.selectbox("2. Select Target Ticker / Pair List", symbols_options)
 
-# Row 2: Multi-Timeframes & Filters
 row2_col1, row2_col2 = st.columns(2)
 timeframe_dictionary = {
     "5 Min": "5m", "15 Min": "15m", "30 Min": "30m", "45 Min": "45m", "75 Min": "75m", "125 Min": "125m",
@@ -167,15 +197,13 @@ timeframe_dictionary = {
 }
 
 with row2_col1:
-    selected_tf_labels = st.multiselect("3. Select Timeframes (Choose Multiple to Scan at Once)", list(timeframe_dictionary.keys()), default=["1 Hour"])
+    selected_tf_labels = st.multiselect("3. Select Timeframes", list(timeframe_dictionary.keys()), default=["1 Hour"])
 with row2_col2:
     zone_filter_mode = st.radio("4. Target Zone Integrity Condition", ["All", "Fresh", "Tested"], horizontal=True)
 
-# Universal Global Dynamic Input Search Bar
 st.markdown("##### 🔍 Quick External Ticker Override")
-quick_search = st.text_input("Type any unique global asset symbol (Overrides above selections, e.g., GOOG, TCS.NS, ETH-USD):", "").strip()
+quick_search = st.text_input("Type any unique global asset symbol (e.g., GOOG, TCS.NS, ETH-USD):", "").strip()
 
-# --- THE MANUAL RUN BUTTON ---
 st.markdown("<br>", unsafe_allow_html=True)
 run_scan_btn = st.button("🚀 START STRUCTURAL MATRIX SCAN", use_container_width=True)
 st.markdown("---")
@@ -184,7 +212,6 @@ st.markdown("---")
 # EXECUTION ENGINE PIPELINE
 # -------------------------------------------------------------------
 if run_scan_btn:
-    # Finalize Target Symbols List
     if quick_search:
         target_symbols = [quick_search]
     elif selected_symbol_raw == "🎨 [ALL SYMBOLS]":
@@ -199,65 +226,66 @@ if run_scan_btn:
             for tf_label in selected_tf_labels:
                 tf_code = timeframe_dictionary[tf_label]
                 
-                # --- BULLETPROOF FIXED TIME-PERIOD STRATEGY FOR ALL TIMEFRAMES ---
+                # --- FIXED DATA RETRIEVAL RULES ---
                 if tf_code in ["5m", "15m", "30m", "45m", "75m", "125m"]:
                     fetch_interval = "5m"
-                    history_period = "30d"  # Safest limit for 5m data download
+                    history_period = "59d"  # Yahoo maximum allowed boundary for 5m feed
                 elif tf_code in ["1h", "2h", "4h", "5h", "6h", "8h", "10h", "16h"]:
                     fetch_interval = "1h"
-                    history_period = "360d" # Safe 1-Year limit: Fixes 2h, 4h, 8h, 10h completely
+                    history_period = "360d" # Absolute stable limit for 1h feed
                 else:
                     fetch_interval = "1d"
-                    history_period = "5y"   # Perfect for Daily and Weekly
+                    history_period = "5y"
                 
                 try:
-                    raw_feed = yf.Ticker(symbol).history(period=history_period, interval=fetch_interval)
-                    if raw_feed.empty: continue
+                    # Fetching Data
+                    ticker_obj = yf.Ticker(symbol)
+                    raw_feed = ticker_obj.history(period=history_period, interval=fetch_interval)
                     
+                    if raw_feed.empty: 
+                        continue
+                    
+                    # Processing and Resampling
                     processed_feed = resample_data(raw_feed, tf_code)
                     zone_logs = scan_supply_demand_zones(processed_feed, symbol, tf_label)
                     all_detected_zones.extend(zone_logs)
-                except Exception:
-                    continue # Skip silently to handle errors smoothly
+                except Exception as e:
+                    continue
 
     # Display Engine
     if all_detected_zones:
         master_df = pd.DataFrame(all_detected_zones)
         
-        # Apply Integrity Conditions
         if zone_filter_mode != "All":
             master_df = master_df[master_df["Status"] == zone_filter_mode]
             
         st.success(f"📊 Matrix Sweep Completed! Found {len(master_df)} valid structure points.")
         
-        # Main Metrics
         m1, m2, m3 = st.columns(3)
         m1.metric("Total Scanned Combos", f"{len(target_symbols)} Assets x {len(selected_tf_labels)} TFs")
         m2.metric("Fresh Active Zones", len(master_df[master_df["Status"] == "Fresh"]))
         m3.metric("Tested Zones Logged", len(master_df[master_df["Status"] == "Tested"]))
         
-        # Data View Matrix Table
         st.subheader("📋 Core Structural Database Logs")
         st.dataframe(master_df.sort_values(by="Pattern Time", ascending=False), use_container_width=True)
         
-        # Dynamic Interactive Chart Canvas Rendering (For Single Asset Mode)
+        # Chart Layout (For single stock lookups)
         if len(target_symbols) == 1 and not master_df.empty:
             st.subheader(f"📈 Real-time Visual Layer Map ({target_symbols[0]})")
             last_tf_label = selected_tf_labels[-1]
             last_tf_code = timeframe_dictionary[last_tf_label]
             
             if last_tf_code in ["5m", "15m", "30m", "45m", "75m", "125m"]:
-                last_fetch = "5m"
-                last_period = "30d"
+                last_fetch, last_period = "5m", "59d"
             elif last_tf_code in ["1h", "2h", "4h", "5h", "6h", "8h", "10h", "16h"]:
-                last_fetch = "1h"
-                last_period = "360d"
+                last_fetch, last_period = "1h", "360d"
             else:
-                last_fetch = "1d"
-                last_period = "5y"
+                last_fetch, last_period = "1d", "5y"
             
             try:
-                chart_feed = resample_data(yf.Ticker(target_symbols[0]).history(period=last_period, interval=last_fetch), last_tf_code)
+                chart_raw = yf.Ticker(target_symbols[0]).history(period=last_period, interval=last_fetch)
+                chart_feed = resample_data(chart_raw, last_tf_code)
+                
                 fig = go.Figure(data=[go.Candlestick(x=chart_feed.index, open=chart_feed['Open'], high=chart_feed['High'], low=chart_feed['Low'], close=chart_feed['Close'], name="Price Feed")])
                 
                 for _, row in master_df[master_df["Symbol"] == target_symbols[0]].tail(10).iterrows():

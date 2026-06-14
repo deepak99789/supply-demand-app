@@ -25,7 +25,8 @@ CHANNEL_IDS = {
 }
 
 def send_market_specific_alert(category, message):
-    if TELEGRAM_TOKEN == "YAHAN_APNA_BOT_TOKEN_PASTE_KAREIN": return
+    if TELEGRAM_TOKEN == "YAHAN_APNA_BOT_TOKEN_PASTE_KAREIN": 
+        return
     target_id = CHANNEL_IDS.get(category, CHANNEL_IDS["Forex (Majors, Minors & Crosses)"])
     try:
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
@@ -107,9 +108,11 @@ TIMEFRAMES_MASTER = {
 
 # Advanced Resampling Engine
 def apply_resampling(df, tf_name):
-    if df.empty: return df
+    if df.empty: 
+        return df
     df = df.copy()
-    if df.index.tz is not None: df.index = df.index.tz_localize(None)
+    if df.index.tz is not None: 
+        df.index = df.index.tz_localize(None)
     
     config = TIMEFRAMES_MASTER[tf_name]
     if "resample_rule" in config:
@@ -120,7 +123,8 @@ def apply_resampling(df, tf_name):
 # S&D Logic Engine
 def scan_supply_demand_zones(df, symbol_name, tf_name):
     zones = []
-    if len(df) < 12: return zones
+    if len(df) < 12: 
+        return zones
     df = df.copy()
     df['candle_size'] = (df['High'] - df['Low']).abs()
     df['body_size'] = (df['Close'] - df['Open']).abs()
@@ -133,27 +137,36 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
             base_indices = list(range(i, i + num_base))
             legout_idx = i + num_base
             
-            if legout_idx >= len(df): continue
+            if legout_idx >= len(df): 
+                continue
             
             legin, legout = df.iloc[legin_idx], df.iloc[legout_idx]
             bases = df.iloc[base_indices]
             
-            if legin['body_ratio'] < 60 or legout['body_ratio'] < 60: continue
-            if legout['body_size'] <= legin['body_size']: continue
+            if legin['body_ratio'] < 60 or legout['body_ratio'] < 60: 
+                continue
+            if legout['body_size'] <= legin['body_size']: 
+                continue
                 
             legout_count = 1
             direction_green = legout['is_green']
             for k in range(legout_idx + 1, len(df)):
-                if df.iloc[k]['is_green'] == direction_green and df.iloc[k]['body_ratio'] >= 50: legout_count += 1
-                else: break
+                if df.iloc[k]['is_green'] == direction_green and df.iloc[k]['body_ratio'] >= 50: 
+                    legout_count += 1
+                else: 
+                    break
                     
             legin_green, legout_green = legin['is_green'], legout['is_green']
             pattern, z_type, proximal, distal = None, None, 0.0, 0.0
             
-            if legin_green and legout_green: pattern, z_type = "RBR", "Demand"
-            elif legin_green and not legout_green: pattern, z_type = "RBD", "Supply"
-            elif not legin_green and legout_green: pattern, z_type = "DBR", "Demand"
-            elif not legin_green and not legout_green: pattern, z_type = "DBD", "Supply"
+            if legin_green and legout_green: 
+                pattern, z_type = "RBR", "Demand"
+            elif legin_green and not legout_green: 
+                pattern, z_type = "RBD", "Supply"
+            elif not legin_green and legout_green: 
+                pattern, z_type = "DBR", "Demand"
+            elif not legin_green and not legout_green: 
+                pattern, z_type = "DBD", "Supply"
                 
             if z_type == "Demand":
                 proximal, distal = bases['High'].max(), bases['Low'].min()
@@ -167,15 +180,21 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
             for j in range(legout_idx + 1, len(df)):
                 cl, ch = df.iloc[j]['Low'], df.iloc[j]['High']
                 if z_type == "Demand":
-                    if cl <= proximal: entered_zone = True
+                    if cl <= proximal: 
+                        entered_zone = True
                     if entered_zone:
-                        if cl < distal: status = "SL HIT"; break
-                        elif ch >= target_price: status = "TARGET"; break
+                        if cl < distal: 
+                            status = "SL HIT"; break
+                        elif ch >= target_price: 
+                            status = "TARGET"; break
                 else:
-                    if ch >= proximal: entered_zone = True
+                    if ch >= proximal: 
+                        entered_zone = True
                     if entered_zone:
-                        if ch > distal: status = "SL HIT"; break
-                        elif cl <= target_price: status = "TARGET"; break
+                        if ch > distal: 
+                            status = "SL HIT"; break
+                        elif cl <= target_price: 
+                            status = "TARGET"; break
                             
             zones.append({
                 "Symbol": symbol_name, "Timeframe": tf_name, "Pattern": pattern, "Type": z_type,
@@ -210,8 +229,10 @@ st.markdown("---")
 # PIPELINE EXECUTION
 # -------------------------------------------------------------------
 if run_scan_btn:
-    if selected_symbol_raw == "🎨 [ALL SYMBOLS]": target_symbols = assets_master[market_cat]
-    else: target_symbols = [selected_symbol_raw]
+    if selected_symbol_raw == "🎨 [ALL SYMBOLS]": 
+        target_symbols = assets_master[market_cat]
+    else: 
+        target_symbols = [selected_symbol_raw]
         
     all_detected_zones = []
     
@@ -221,7 +242,8 @@ if run_scan_btn:
                 config = TIMEFRAMES_MASTER[tf_label]
                 try:
                     raw_feed = yf.Ticker(symbol).history(period=config["period"], interval=config["base_interval"])
-                    if raw_feed.empty: continue
+                    if raw_feed.empty: 
+                        continue
                     processed_feed = apply_resampling(raw_feed, tf_label)
                     all_detected_zones.extend(scan_supply_demand_zones(processed_feed, symbol, tf_label))
                 except Exception:
@@ -240,37 +262,35 @@ if run_scan_btn:
         st.success(f"📊 Matrix Sweep Completed! Displaying {len(master_df)} rows based on filter.")
         
         # Segmented Telegram Dispatch
-if send_alerts and not master_df.empty:
-    for _, alert_row in master_df.iterrows():
-        # Emoji aur status logic...
-        if alert_row['Status'] == "FRESH":
-            main_emoji = "🟢" if alert_row['Type'] == "Demand" else "🔴"
-            display_status = "FRESH"
-        elif alert_row['Status'] == "SL HIT":
-            main_emoji = "❌"
-            display_status = "VIOLATED (SL HIT)"
-        else:
-            main_emoji = "🎉"
-            display_status = "VIOLATED (TARGET HIT)"
+        if send_alerts and not master_df.empty:
+            for _, alert_row in master_df.iterrows():
+                if alert_row['Status'] == "FRESH":
+                    main_emoji = "🟢" if alert_row['Type'] == "Demand" else "🔴"
+                    display_status = "FRESH"
+                elif alert_row['Status'] == "SL HIT":
+                    main_emoji = "❌"
+                    display_status = "VIOLATED (SL HIT)"
+                else:
+                    main_emoji = "🎉"
+                    display_status = "VIOLATED (TARGET HIT)"
+                    
+                alert_msg = (
+                    f"{main_emoji} *MANUAL SCANNER UPDATE* {main_emoji}\n\n"
+                    f"▪️ *SYMBOL :* `{alert_row['Symbol']}`\n"
+                    f"▪️ *TIMEFRAME :* `{alert_row['Timeframe']}`\n"
+                    f"▪️ *PATTERN :* `{alert_row['Pattern']}`\n"
+                    f"▪️ *TYPE :* `{alert_row['Type'].upper()}`\n"
+                    f"▪️ *BASE COUNT :* `{alert_row['Base Count']}`\n"
+                    f"▪️ *LEGOUTILITY COUNT :* `{alert_row['Legout Count']}`\n"
+                    f"▪️ *STATUS :* `{display_status}`\n"
+                    f"▪️ *PROXIMAL LINE :* `{alert_row['Proximal']}`\n"
+                    f"▪️ *DISTAL LINE :* `{alert_row['Distal']}`\n"
+                    f"▪️ *TARGET (1:2) :* `{alert_row['Target (1:2)']}`\n"
+                    f"▪️ *DATE OF ZONE FORMED :* `{alert_row['Formed At']}`"
+                )
+                send_market_specific_alert(market_cat, alert_msg)
             
-        # Yahan 'alert_row' ka use karein, 'new_zone' ka nahi
-        alert_msg = (
-            f"{main_emoji} *MANUAL SCANNER UPDATE* {main_emoji}\n\n"
-            f"▪️ *SYMBOL :* `{alert_row['Symbol']}`\n"
-            f"▪️ *TIMEFRAME :* `{alert_row['Timeframe']}`\n"
-            f"▪️ *PATTERN :* `{alert_row['Pattern']}`\n"
-            f"▪️ *TYPE :* `{alert_row['Type'].upper()}`\n"
-            f"▪️ *BASE COUNT :* `{alert_row['Base Count']}`\n"
-            f"▪️ *LEGOUT COUNT :* `{alert_row['Legout Count']}`\n"
-            f"▪️ *STATUS :* `{display_status}`\n"
-            f"▪️ *PROXIMAL LINE :* `{alert_row['Proximal']}`\n"
-            f"▪️ *DISTAL LINE :* `{alert_row['Distal']}`\n"
-            f"▪️ *TARGET (1:2) :* `{alert_row['Target (1:2)']}`\n"
-            f"▪️ *DATE OF ZONE FORMED :* `{alert_row['Formed At']}`"
-        )
-        send_market_specific_alert(market_cat, alert_msg)                                                                        
-        if not fresh_only_df.empty:
-                st.info("📢 Fresh zones have been sent to their specific Telegram channels!")
+            st.info("📢 Scan results and zones have been processed/sent to Telegram.")
 
         # Metrics Panel
         m1, m2, m3, m4 = st.columns(4)
@@ -300,6 +320,7 @@ if send_alerts and not master_df.empty:
                         fig.add_shape(type="line", x0=row['Formed At'], y0=row['Target (1:2)'], x1=chart_feed.index[-1], y1=row['Target (1:2)'], line=dict(color="#3498db", width=2, dash="dash"))
                         fig.update_layout(template="plotly_dark", height=400, xaxis_rangeslider_visible=False)
                         st.plotly_chart(fig, use_container_width=True, key=f"ch_{idx}")
-                except Exception: st.error("Chart render error.")
+                except Exception: 
+                    st.error("Chart render error.")
     else:
         st.info("No structural zones detected for this selection.")

@@ -245,13 +245,20 @@ if run_scan_btn:
             for _, alert_row in fresh_only_df.iterrows():
                 emoji = "🟢" if alert_row['Type'] == "Demand" else "🔴"
                 alert_msg = (
-                    f"{emoji} *NEW MANUAL ZONE* {emoji}\n\n"
-                    f"▪ *SYMBOL :* `{alert_row['Symbol']}`\n"
-                    f"▪ *TIMEFRAME :* `{alert_row['Timeframe']}`\n"
-                    f"▪ *TYPE :* `{alert_row['Type'].upper()}`\n"
-                    f"▪ *PROXIMAL :* `{alert_row['Proximal']}`\n"
-                    f"▪ *DISTAL (SL) :* `{alert_row['Distal']}`\n"
-                    f"▪ *TARGET (1:2) :* `{alert_row['Target (1:2)']}`"
+                    alert_msg = (
+    f"🟢 *AUTOMATIC INSTITUTIONAL ZONE* 🟢\n\n"
+    f"▪️ *SYMBOL :* `{new_zone['Symbol']}`\n"
+    f"▪️ *TIMEFRAME :* `{new_zone['Timeframe']}`\n"
+    f"▪️ *PATTERN :* `{new_zone['Pattern']}`\n"
+    f"▪️ *TYPE :* `{new_zone['Type'].upper()}`\n"
+    f"▪️ *BASE COUNT :* `{new_zone.get('Base Count', 1)}`\n"
+    f"▪️ *LEGOUT COUNT :* `{new_zone.get('Legout Count', 1)}`\n"
+    f"▪️ *STATUS :* `FRESH`\n"
+    f"▪️ *PROXIMAL LINE :* `{new_zone['Proximal']}`  <-- *Yahan se entry plan hogi*\n"
+    f"▪️ *DISTAL LINE :* `{new_zone['Distal']}`     <-- *Yahan aapka Stop Loss hoga*\n"
+    f"▪️ *TARGET (1:2) :* `{new_zone['Target']}`\n"
+    f"▪️ *DATE OF ZONE FORMED :* `{new_zone['Formed_At']}`"
+)
                 )
                 send_market_specific_alert(market_cat, alert_msg)
             if not fresh_only_df.empty:

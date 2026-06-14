@@ -202,7 +202,7 @@ if __name__ == "__main__":
                             f"▪️ *PROXIMAL LINE :* `{zone['Proximal']}`\n"
                             f"▪️ *DISTAL LINE :* `{zone['Distal']}`\n"
                             f"▪️ *DATE OF ZONE FORMED :* `{zone['Formed At']}`\n\n"
-                            f"📈 _Scanner powered by Global Bot System_"
+                            
                         )
                         send_telegram_alert(alert_msg)
                 except Exception as e:

@@ -6,14 +6,14 @@ import requests
 # -------------------------------------------------------------------
 # ⚙️ MULTI-CHANNEL TELEGRAM CONFIGURATION
 # -------------------------------------------------------------------
-TELEGRAM_TOKEN = "YAHAN_APNA_BOT_TOKEN_PASTE_KAREIN"
+TELEGRAM_TOKEN = "8781917241:AAFfyCdiJRCx321U_kVp0pJAe1fhKYcS5BU"
 
 CHANNEL_IDS = {
-    "Indian Stocks": "YAHAN_NIFTY_CHANNEL_CHAT_ID_DALEIN",
-    "US Stocks": "YAHAN_US_STOCKS_CHANNEL_CHAT_ID_DALEIN",
-    "Forex": "YAHAN_FOREX_CHANNEL_CHAT_ID_DALEIN",
-    "Commodities": "YAHAN_COMMODITY_CHANNEL_CHAT_ID_DALEIN",
-    "Crypto": "YAHAN_CRYPTO_CHANNEL_CHAT_ID_DALEIN"
+    "Indian Stocks": "-1004441153450",
+    "US Stocks": "-1004457256685",
+    "Forex": "-1004448848917",
+    "Commodities": "-1004448848917",
+    "Crypto": "-1004451326458"
 }
 
 DB_FILE = "zones_db.csv"

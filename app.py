@@ -4,8 +4,12 @@ import yfinance as yf
 import plotly.graph_objects as go
 import requests
 
+# Full Screen Configuration
 st.set_page_config(layout="wide", page_title="Institutional Supply/Demand Matrix Scanner")
+
+# Centered Title Layout
 st.markdown("<h1 style='text-align: center; color: #2ecc71;'>⚡ Institutional Supply & Demand Matrix Scanner</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #bdc3c7;'>Multi-Asset, Multi-Timeframe Institutional Cluster Intelligence System with Premium Alerts</p>", unsafe_allow_html=True)
 st.markdown("---")
 
 # -------------------------------------------------------------------
@@ -31,19 +35,55 @@ def send_market_specific_alert(category, message):
         pass
 
 # -------------------------------------------------------------------
-# MASTER DATABASE
+# 1. 🎯 COMPLETE ASSETS MASTER DATABASE (FULL 100 US STOCKS ADDED)
 # -------------------------------------------------------------------
 def get_complete_asset_database():
     return {
-        "Indian Stocks (Nifty 100)": ["RELIANCE.NS", "TCS.NS", "INFY.NS", "HDFCBANK.NS", "ICICIBANK.NS", "SBIN.NS"],
-        "US Stocks (Nasdaq 100)": ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA"],
-        "Forex (Majors, Minors & Crosses)": ["EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X"],
-        "Crypto": ["BTC-USD", "ETH-USD", "SOL-USD"],
-        "Commodities": ["GC=F", "CL=F", "NG=F"]
+        "Indian Stocks (Nifty 100)": [
+            "ABB.NS", "ACC.NS", "ADANIENT.NS", "ADANIGREEN.NS", "ADANIPORTS.NS", "ADANIPOWER.NS", "ATGL.NS", "AMBUJACEM.NS", "APOLLOHOSP.NS", "ASHOKLEY.NS",
+            "ASIANPAINT.NS", "ASTRAL.NS", "AXISBANK.NS", "BAJAJ-AUTO.NS", "BAJFINANCE.NS", "BAJAJFINSV.NS", "BALKRISIND.NS", "BANDHANBNK.NS", "BANKBARODA.NS",
+            "BERGEPAINT.NS", "BHARATFORG.NS", "BHEL.NS", "BPCL.NS", "BHARTIARTL.NS", "BIOCON.NS", "BOSCHLTD.NS", "BRITANNIA.NS", "CANBK.NS", "CGPOWER.NS",
+            "CHOLAMAND.NS", "CIPLA.NS", "COALINDIA.NS", "COFORGE.NS", "COLPAL.NS", "CONCOR.NS", "CUMMINSIND.NS", "DLF.NS", "DABUR.NS", "DIVISLAB.NS",
+            "DRREDDY.NS", "EICHERMOT.NS", "GAIL.NS", "GMRINFRA.NS", "GODREJCP.NS", "GODREJPROP.NS", "GRASIM.NS", "HCLTECH.NS", "HDFCBANK.NS", "HDFCLIFE.NS",
+            "HAVELLS.NS", "HEROMOTOCO.NS", "HINDALCO.NS", "HAL.NS", "HINDUNILVR.NS", "ICICIBANK.NS", "ICICIGI.NS", "ICICIPRULI.NS", "IDFCFIRSTB.NS", "ITC.NS",
+            "INDIANB.NS", "INDHOTEL.NS", "IOC.NS", "IRCTC.NS", "IRFC.NS", "IGL.NS", "INDUSTOWER.NS", "INDUSINDBK.NS", "INFY.NS", "INTERGLOBE.NS",
+            "JINDALSTEL.NS", "JIOFIN.NS", "JSWSTEEL.NS", "JUBLFOOD.NS", "KPITTECH.NS", "KOTAKBANK.NS", "L&TFH.NS", "LT.NS", "LTIM.NS", "LICHSGFIN.NS",
+            "LUPIN.NS", "M&M.NS", "MARICO.NS", "MARUTI.NS", "MAXHEALTH.NS", "NTPC.NS", "NESTLEIND.NS", "OBEROIRLTY.NS", "ONGC.NS", "OIL.NS",
+            "PIIND.NS", "PFC.NS", "POWERGRID.NS", "PNB.NS", "RELIANCE.NS", "SBICARD.NS", "SBILIFE.NS", "SRF.NS", "MOTHERSON.NS", "SHREECEM.NS",
+            "SHRIRAMFIN.NS", "SIEMENS.NS", "SONACOMS.NS", "SBIN.NS", "SUNPHARMA.NS", "SUNTV.NS", "SUPREMEIND.NS", "SUZLON.NS", "TATACOMM.NS", "TATACONSUM.NS",
+            "TATAELXSI.NS", "TATAMOTORS.NS", "TATAPOWER.NS", "TATASTEEL.NS", "TCS.NS", "TECHM.NS", "TITAN.NS", "TORNTPHARM.NS", "TRENT.NS", "TIINDIA.NS",
+            "UPL.NS", "ULTRACEMCO.NS", "UNITDSPR.NS", "VBL.NS", "VEDL.NS", "VOLTAS.NS", "WIPRO.NS", "YESBANK.NS", "ZOMATO.NS"
+        ],
+        "US Stocks (Nasdaq 100)": [
+            "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "AVGO", "PEP", "COST",
+            "CSCO", "TMUS", "ADBE", "NFLX", "AMD", "CMCSA", "TXN", "QCOM", "INTC", "AMGN",
+            "HON", "INTU", "AMAT", "BKNG", "SBUX", "MDLZ", "ISRG", "GILD", "LRCX", "REGN",
+            "VRTX", "MU", "ADP", "PANW", "MELI", "SNPS", "CDNS", "KLAC", "CSX", "MAR",
+            "ORLY", "ASML", "CTAS", "NXPI", "WDAY", "MNST", "ROP", "LULU", "ADSK", "CPRT",
+            "AEP", "KDP", "MCHP", "ODFL", "PAYX", "PCAR", "DXCM", "CHTR", "MRVL", "LNT",
+            "AZN", "EXC", "IDXX", "MSI", "CTSH", "FTNT", "GFL", "TEAM", "BKR", "DDOG",
+            "PDD", "CEG", "GEHC", "ROST", "FAST", "VRSK", "BILI", "ANSS", "SIRI", "ALGN",
+            "EA", "ILMN", "WBD", "MDB", "FANG", "TTWO", "OKTA", "SPLK", "DASH", "ZS",
+            "CRWD", "COGN", "MSTR", "HOOD", "ARM", "PLTR", "SMCI", "APP", "CEG", "AXON"
+        ],
+        "Forex (Majors, Minors & Crosses)": [
+            "EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X", "USDCAD=X", "NZDUSD=X", "USDCHF=X",
+            "EURGBP=X", "EURJPY=X", "GBPJPY=X", "AUDJPY=X", "EURCAD=X", "EURCHF=X", "GBPCAD=X",
+            "NZDJPY=X", "CADJPY=X", "CHFJPY=X", "AUDCAD=X", "AUDNZD=X", "GBPAUD=X", "EURAUD=X"
+        ],
+        "Commodities": [
+            "GC=F", "SI=F", "HG=F", "CL=F", "NG=F", "BZ=F", "ZO=F", "ZC=F", "ZS=F", "ZM=F"
+        ],
+        "Crypto": [
+            "BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "XRP-USD", "ADA-USD", "DOGE-USD", "DOT-USD"
+        ]
     }
 
 assets_master = get_complete_asset_database()
 
+# -------------------------------------------------------------------
+# RESAMPLING ENGINE
+# -------------------------------------------------------------------
 def resample_data(df, timeframe_str):
     if df.empty or timeframe_str in ['5m', '15m', '30m', '1h', '1d', '1wk']: return df
     df = df.copy()
@@ -53,6 +93,9 @@ def resample_data(df, timeframe_str):
     if not rule: return df
     return df.resample(rule).agg({'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'}).dropna()
 
+# -------------------------------------------------------------------
+# S&D ENGINE WITH 1:2 RR LOGIC
+# -------------------------------------------------------------------
 def scan_supply_demand_zones(df, symbol_name, tf_name):
     zones = []
     if len(df) < 12: return zones
@@ -90,7 +133,6 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
             elif not legin_green and legout_green: pattern, z_type = "DBR", "Demand"
             elif not legin_green and not legout_green: pattern, z_type = "DBD", "Supply"
                 
-            zone_size = abs(proximal - distal)
             if z_type == "Demand":
                 proximal, distal = bases['High'].max(), bases['Low'].min()
                 target_price = proximal + (abs(proximal - distal) * 2)
@@ -121,29 +163,38 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
             })
     return zones
 
-# CONTROL PANEL
+# -------------------------------------------------------------------
+# CONTROL PANEL INTERFACE
+# -------------------------------------------------------------------
 st.markdown("### 🎛️ Scanner Control Matrix")
 row1_col1, row1_col2 = st.columns(2)
 with row1_col1:
     market_cat = st.selectbox("1. Choose Market Category", list(assets_master.keys()))
 with row1_col2:
-    selected_symbol_raw = st.selectbox("2. Select Target Ticker List", ["🎨 [ALL SYMBOLS]"] + assets_master[market_cat])
+    symbols_options = ["🎨 [ALL SYMBOLS]"] + assets_master[market_cat]
+    selected_symbol_raw = st.selectbox("2. Select Target Ticker / Pair List", symbols_options)
 
 row2_col1, row2_col2 = st.columns(2)
 timeframe_dictionary = {"1 Hour": "1h", "4 Hour": "4h", "Daily": "1d"}
 with row2_col1:
     selected_tf_labels = st.multiselect("3. Select Timeframes", list(timeframe_dictionary.keys()), default=["1 Hour"])
 with row2_col2:
-    zone_filter_mode = st.radio("4. Integrity Condition", ["FRESH", "SL HIT", "TARGET", "ALL"], horizontal=True)
+    zone_filter_mode = st.radio("4. Target Zone Integrity Condition", ["FRESH", "SL HIT", "TARGET", "ALL"], horizontal=True)
 
 send_alerts = st.checkbox("📢 Send Fresh Zones to Segregated Telegram Channels", value=True)
 run_scan_btn = st.button("🚀 START STRUCTURAL MATRIX SCAN", use_container_width=True)
+st.markdown("---")
 
+# -------------------------------------------------------------------
+# PIPELINE EXECUTION
+# -------------------------------------------------------------------
 if run_scan_btn:
-    target_symbols = assets_master[market_cat] if selected_symbol_raw == "🎨 [ALL SYMBOLS]" else [selected_symbol_raw]
+    if selected_symbol_raw == "🎨 [ALL SYMBOLS]": target_symbols = assets_master[market_cat]
+    else: target_symbols = [selected_symbol_raw]
+        
     all_detected_zones = []
     
-    with st.spinner("Analyzing Matrix streams..."):
+    with st.spinner(f"Scanning {len(target_symbols)} assets across selected timeframes... Please wait."):
         for symbol in target_symbols:
             for tf_label in selected_tf_labels:
                 tf_code = timeframe_dictionary[tf_label]
@@ -152,10 +203,12 @@ if run_scan_btn:
                     if raw_feed.empty: continue
                     processed_feed = resample_data(raw_feed, tf_code)
                     all_detected_zones.extend(scan_supply_demand_zones(processed_feed, symbol, tf_label))
-                except Exception: continue
+                except Exception:
+                    continue
 
     if all_detected_zones:
         master_df = pd.DataFrame(all_detected_zones)
+        
         total_fresh = len(master_df[master_df["Status"] == "FRESH"])
         total_target = len(master_df[master_df["Status"] == "TARGET"])
         total_sl_hit = len(master_df[master_df["Status"] == "SL HIT"])
@@ -163,21 +216,54 @@ if run_scan_btn:
         if zone_filter_mode != "ALL":
             master_df = master_df[master_df["Status"] == zone_filter_mode]
             
-        st.success(f"📊 Scan Completed! Found {len(master_df)} matching points.")
+        st.success(f"📊 Matrix Sweep Completed! Displaying {len(master_df)} rows based on filter.")
         
-        # Broadcast Manual Scans to exact channels
+        # Segmented Telegram Dispatch
         if send_alerts and not master_df.empty:
             fresh_only_df = master_df[master_df["Status"] == "FRESH"]
             for _, alert_row in fresh_only_df.iterrows():
                 emoji = "🟢" if alert_row['Type'] == "Demand" else "🔴"
-                alert_msg = f"{emoji} *MANUAL NEW ZONE* {emoji}\n\n▪️ *SYMBOL :* `{alert_row['Symbol']}`\n▪️ *TIMEFRAME :* `{alert_row['Timeframe']}`\n▪️ *PROXIMAL :* `{alert_row['Proximal']}`\n▪️ *TARGET (1:2) :* `{alert_row['Target (1:2)']}`"
+                alert_msg = (
+                    f"{emoji} *NEW MANUAL ZONE* {emoji}\n\n"
+                    f"▪ *SYMBOL :* `{alert_row['Symbol']}`\n"
+                    f"▪ *TIMEFRAME :* `{alert_row['Timeframe']}`\n"
+                    f"▪ *TYPE :* `{alert_row['Type'].upper()}`\n"
+                    f"▪ *PROXIMAL :* `{alert_row['Proximal']}`\n"
+                    f"▪ *DISTAL (SL) :* `{alert_row['Distal']}`\n"
+                    f"▪ *TARGET (1:2) :* `{alert_row['Target (1:2)']}`"
+                )
                 send_market_specific_alert(market_cat, alert_msg)
-            st.info("📢 Segmented notifications dispatched successfully!")
+            if not fresh_only_df.empty:
+                st.info("📢 Fresh zones have been sent to their specific Telegram channels!")
 
+        # Metrics Panel
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Scanned", f"{len(target_symbols)}A")
-        m2.metric("🟢 Fresh", total_fresh)
-        m3.metric("🎯 Targets", total_target)
-        m4.metric("🔴 SL Hits", total_sl_hit)
+        m1.metric("Scanned Assets", f"{len(target_symbols)} Pairs")
+        m2.metric("🟢 Fresh Active Zones", total_fresh)
+        m3.metric("🎯 Target Hits (1:2 RR)", total_target)
+        m4.metric("🔴 Stop Loss (SL) Hits", total_sl_hit)
         
+        clean_columns = ["Symbol", "Timeframe", "Pattern", "Type", "Base Count", "Legout Count", "Status", "Proximal", "Distal", "Target (1:2)", "Formed At"]
+        master_df = master_df[clean_columns]
+        
+        st.subheader("📋 Core Structural Database Logs")
         st.dataframe(master_df.sort_values(by="Formed At", ascending=False), use_container_width=True)
+        
+        # Charts Matrix
+        st.markdown("### 🔍 Live Visual Chart Matrix")
+        for idx, row in master_df.sort_values(by="Formed At", ascending=False).head(10).iterrows():
+            with st.expander(f"📈 {row['Symbol']} | {row['Timeframe']} | {row['Status']}"):
+                curr_tf_code = timeframe_dictionary[row['Timeframe']]
+                try:
+                    chart_feed = resample_data(yf.Ticker(row['Symbol']).history(period="360d" if curr_tf_code=="1h" else "5y", interval="1h" if curr_tf_code != "1d" else "1d"), curr_tf_code)
+                    if not chart_feed.empty:
+                        fig = go.Figure(data=[go.Candlestick(x=chart_feed.index, open=chart_feed['Open'], high=chart_feed['High'], low=chart_feed['Low'], close=chart_feed['Close'], name="Price")])
+                        sc = "rgba(46, 204, 113, 0.15)" if row['Type'] == "Demand" else "rgba(231, 76, 60, 0.15)"
+                        lc = "#2ecc71" if row['Type'] == "Demand" else "#e74c3c"
+                        fig.add_shape(type="rect", x0=row['Formed At'], y0=row['Distal'], x1=chart_feed.index[-1], y1=row['Proximal'], fillcolor=sc, line=dict(color=lc, width=1))
+                        fig.add_shape(type="line", x0=row['Formed At'], y0=row['Target (1:2)'], x1=chart_feed.index[-1], y1=row['Target (1:2)'], line=dict(color="#3498db", width=2, dash="dash"))
+                        fig.update_layout(template="plotly_dark", height=400, xaxis_rangeslider_visible=False)
+                        st.plotly_chart(fig, use_container_width=True, key=f"ch_{idx}")
+                except Exception: st.error("Chart render error.")
+    else:
+        st.info("No structural zones detected for this selection.")

@@ -15,13 +15,13 @@ st.markdown("---")
 # -------------------------------------------------------------------
 # ⚙️ MULTI-CHANNEL TELEGRAM CONFIGURATION
 # -------------------------------------------------------------------
-TELEGRAM_TOKEN = "YAHAN_APNA_BOT_TOKEN_PASTE_KAREIN"
+TELEGRAM_TOKEN = "8781917241:AAFfyCdiJRCx321U_kVp0pJAe1fhKYcS5BU"
 CHANNEL_IDS = {
-    "Indian Stocks (Nifty 100)": "YAHAN_NIFTY_CHANNEL_CHAT_ID_DALEIN",
-    "US Stocks (Nasdaq 100)": "YAHAN_US_STOCKS_CHANNEL_CHAT_ID_DALEIN",
-    "Forex (Majors, Minors & Crosses)": "YAHAN_FOREX_CHANNEL_CHAT_ID_DALEIN",
-    "Commodities": "YAHAN_COMMODITY_CHANNEL_CHAT_ID_DALEIN",
-    "Crypto": "YAHAN_CRYPTO_CHANNEL_CHAT_ID_DALEIN"
+    "Indian Stocks (Nifty 100)": "-1004441153450",
+    "US Stocks (Nasdaq 100)": "-1004457256685",
+    "Forex (Majors, Minors & Crosses)": "-1004448848917",
+    "Commodities": "-1004448848917",
+    "Crypto": "-1004451326458"
 }
 
 def send_market_specific_alert(category, message):

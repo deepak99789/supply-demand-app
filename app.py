@@ -245,7 +245,7 @@ if run_scan_btn:
             for _, alert_row in fresh_only_df.iterrows():
                 emoji = "🟢" if alert_row['Type'] == "Demand" else "🔴"
                 alert_msg = (
-                    alert_msg = (
+                
     f"🟢 *AUTOMATIC INSTITUTIONAL ZONE* 🟢\n\n"
     f"▪️ *SYMBOL :* `{new_zone['Symbol']}`\n"
     f"▪️ *TIMEFRAME :* `{new_zone['Timeframe']}`\n"
@@ -258,7 +258,7 @@ if run_scan_btn:
     f"▪️ *DISTAL LINE :* `{new_zone['Distal']}`     <-- *Yahan aapka Stop Loss hoga*\n"
     f"▪️ *TARGET (1:2) :* `{new_zone['Target']}`\n"
     f"▪️ *DATE OF ZONE FORMED :* `{new_zone['Formed_At']}`"
-)
+
                 )
                 send_market_specific_alert(market_cat, alert_msg)
             if not fresh_only_df.empty:

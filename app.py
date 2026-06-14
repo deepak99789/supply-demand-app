@@ -240,26 +240,36 @@ if run_scan_btn:
         st.success(f"📊 Matrix Sweep Completed! Displaying {len(master_df)} rows based on filter.")
         
         # Segmented Telegram Dispatch
-        if send_alerts and not master_df.empty:
-            fresh_only_df = master_df[master_df["Status"] == "FRESH"]
-            for _, alert_row in fresh_only_df.iterrows():
-                emoji = "🟢" if alert_row['Type'] == "Demand" else "🔴"
-                alert_msg = (
-                
-    f"🟢 *AUTOMATIC INSTITUTIONAL ZONE* 🟢\n\n"
-    f"▪️ *SYMBOL :* `{new_zone['Symbol']}`\n"
-    f"▪️ *TIMEFRAME :* `{new_zone['Timeframe']}`\n"
-    f"▪️ *PATTERN :* `{new_zone['Pattern']}`\n"
-    f"▪️ *TYPE :* `{new_zone['Type'].upper()}`\n"
-    f"▪️ *BASE COUNT :* `{new_zone.get('Base Count', 1)}`\n"
-    f"▪️ *LEGOUT COUNT :* `{new_zone.get('Legout Count', 1)}`\n"
-    f"▪️ *STATUS :* `FRESH`\n"
-    f"▪️ *PROXIMAL LINE :* `{new_zone['Proximal']}`  <-- *Yahan se entry plan hogi*\n"
-    f"▪️ *DISTAL LINE :* `{new_zone['Distal']}`     <-- *Yahan aapka Stop Loss hoga*\n"
-    f"▪️ *TARGET (1:2) :* `{new_zone['Target']}`\n"
-    f"▪️ *DATE OF ZONE FORMED :* `{new_zone['Formed_At']}`"
-
-                )
+       
+if send_alerts and not master_df.empty:
+    for _, alert_row in master_df.iterrows():
+        # Emoji aur status logic...
+        if alert_row['Status'] == "FRESH":
+            main_emoji = "🟢" if alert_row['Type'] == "Demand" else "🔴"
+            display_status = "FRESH"
+        elif alert_row['Status'] == "SL HIT":
+            main_emoji = "❌"
+            display_status = "VIOLATED (SL HIT)"
+        else:
+            main_emoji = "🎉"
+            display_status = "VIOLATED (TARGET HIT)"
+            
+        # Yahan 'alert_row' ka use karein, 'new_zone' ka nahi
+        alert_msg = (
+            f"{main_emoji} *MANUAL SCANNER UPDATE* {main_emoji}\n\n"
+            f"▪️ *SYMBOL :* `{alert_row['Symbol']}`\n"
+            f"▪️ *TIMEFRAME :* `{alert_row['Timeframe']}`\n"
+            f"▪️ *PATTERN :* `{alert_row['Pattern']}`\n"
+            f"▪️ *TYPE :* `{alert_row['Type'].upper()}`\n"
+            f"▪️ *BASE COUNT :* `{alert_row['Base Count']}`\n"
+            f"▪️ *LEGOUT COUNT :* `{alert_row['Legout Count']}`\n"
+            f"▪️ *STATUS :* `{display_status}`\n"
+            f"▪️ *PROXIMAL LINE :* `{alert_row['Proximal']}`\n"
+            f"▪️ *DISTAL LINE :* `{alert_row['Distal']}`\n"
+            f"▪️ *TARGET (1:2) :* `{alert_row['Target (1:2)']}`\n"
+            f"▪️ *DATE OF ZONE FORMED :* `{alert_row['Formed At']}`"
+        )
+        send_market_specific_alert(market_cat, alert_msg)
                 send_market_specific_alert(market_cat, alert_msg)
             if not fresh_only_df.empty:
                 st.info("📢 Fresh zones have been sent to their specific Telegram channels!")

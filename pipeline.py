@@ -7,8 +7,8 @@ import os
 # -------------------------------------------------------------------
 # ⚙️ TELEGRAM CONFIGURATION (Apna Token aur Chat ID Yahan Dalein)
 # -------------------------------------------------------------------
-TELEGRAM_TOKEN = "YAHAN_APNA_BOT_TOKEN_PASTE_KAREIN"  # <-- Token daalna na bhulein
-TELEGRAM_CHAT_ID = "YAHAN_APNI_CHAT_ID_PASTE_KAREIN"  # <-- Chat ID daalna na bhulein
+TELEGRAM_TOKEN = "8781917241:AAFfyCdiJRCx321U_kVp0pJAe1fhKYcS5BU"  # <-- Token daalna na bhulein
+TELEGRAM_CHAT_ID = "513065799"  # <-- Chat ID daalna na bhulein
 
 def send_telegram_alert(message):
     if TELEGRAM_TOKEN == "YAHAN_APNA_BOT_TOKEN_PASTE_KAREIN" or TELEGRAM_CHAT_ID == "YAHAN_APNI_CHAT_ID_PASTE_KAREIN":
@@ -48,15 +48,7 @@ def get_complete_asset_database():
         ],
         "Crypto": ["BTC-USD", "ETH-USD", "SOL-USD"],
         "Commodities (Full Suite)": [
-            "GC=F",   # Gold (XAUUSD Future)
-            "SI=F",   # Silver (XAGUSD Future)
-            "HG=F",   # Copper Future
-            "ZN=F",   # Zinc Future
-            "CL=F",   # Crude Oil WTI
-            "BZ=F",   # Brent Crude Oil
-            "NG=F",   # Natural Gas
-            "PL=F",   # Platinum Future
-            "PA=F"    # Palladium Future
+            "GC=F", "SI=F", "HG=F", "ZN=F", "CL=F", "BZ=F", "NG=F", "PL=F", "PA=F"
         ]
     }
 
@@ -77,24 +69,29 @@ def resample_data(df, timeframe_str):
 
 def scan_supply_demand_zones(df, symbol_name, tf_name):
     zones = []
-    if len(df) < 10: return zones
+    if len(df) < 12: return zones
     df = df.copy()
     df['candle_size'] = (df['High'] - df['Low']).abs()
     df['body_size'] = (df['Close'] - df['Open']).abs()
     df['is_green'] = df['Close'] > df['Open']
     df['body_ratio'] = (df['body_size'] / df['candle_size'].replace(0, 0.0001)) * 100
 
-    for i in range(5, len(df) - 2):
+    for i in range(5, len(df) - 3):
         for num_base in [1, 2, 3]:
             legin_idx = i - 1
             base_indices = list(range(i, i + num_base))
             legout_idx = i + num_base
-            follow_up_idx = legout_idx + 1
             
-            if follow_up_idx >= len(df): continue
-            legin, legout, follow_up, bases = df.iloc[legin_idx], df.iloc[legout_idx], df.iloc[follow_up_idx], df.iloc[base_indices]
+            if legout_idx >= len(df): continue
             
+            legin = df.iloc[legin_idx]
+            legout = df.iloc[legout_idx]
+            bases = df.iloc[base_indices]
+            
+            # Legout and Legin Body Filter
             if legin['body_ratio'] < 60 or legout['body_ratio'] < 60: continue
+            
+            # Base Candles Validation
             valid_bases = True
             for _, base in bases.iterrows():
                 if base['body_size'] > (legin['body_size'] * 0.5):
@@ -102,46 +99,66 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
                     break
             if not valid_bases: continue
             if legout['body_size'] <= legin['body_size']: continue
-            if legout['is_green'] != follow_up['is_green']: continue
-                
+            
+            # Calculate Dynamic Legout Count (Consecutive candles in same direction)
+            legout_count = 1
+            direction_green = legout['is_green']
+            for k in range(legout_idx + 1, len(df)):
+                if df.iloc[k]['is_green'] == direction_green and df.iloc[k]['body_ratio'] >= 50:
+                    legout_count += 1
+                else:
+                    break
+                    
+            follow_up_idx = legout_idx + legout_count
+            if follow_up_idx > len(df): continue
+            
             legin_green, legout_green = legin['is_green'], legout['is_green']
-            zone_type, proximal, distal = None, 0.0, 0.0
+            pattern, z_type, proximal, distal = None, None, 0.0, 0.0
             
             if legin_green and legout_green:
-                zone_type = "RBR (Demand)"
+                pattern, z_type = "RBR", "Demand"
                 proximal = bases['High'].max()
                 distal = bases['Low'].min()
             elif legin_green and not legout_green:
-                zone_type = "RBD (Supply)"
+                pattern, z_type = "RBD", "Supply"
                 proximal = bases['Low'].min()
                 distal = bases['High'].max()
             elif not legin_green and legout_green:
-                zone_type = "DBR (Demand)"
+                pattern, z_type = "DBR", "Demand"
                 proximal = bases['High'].max()
                 distal = bases['Low'].min()
             elif not legin_green and not legout_green:
-                zone_type = "DBD (Supply)"
+                pattern, z_type = "DBD", "Supply"
                 proximal = bases['Low'].min()
                 distal = bases['High'].max()
                 
-            tested = False
-            for j in range(follow_up_idx + 1, len(df)):
-                if "Demand" in zone_type and df.iloc[j]['Low'] <= proximal:
-                    tested = True
+            # Check Status (Fresh or Violated)
+            status = "FRESH"
+            for j in range(legout_idx + 1, len(df)):
+                if "Demand" in z_type and df.iloc[j]['Low'] < distal:
+                    status = "VIOLATED"
                     break
-                if "Supply" in zone_type and df.iloc[j]['High'] >= proximal:
-                    tested = True
+                if "Supply" in z_type and df.iloc[j]['High'] > distal:
+                    status = "VIOLATED"
                     break
                     
-            if not tested:
+            if status == "FRESH":
                 zones.append({
-                    "Symbol": symbol_name, "Timeframe": tf_name, "Pattern Time": df.index[i].strftime('%Y-%m-%d %H:%M'),
-                    "Zone Type": zone_type, "Proximal": round(proximal, 4), "Distal": round(distal, 4)
+                    "Symbol": symbol_name,
+                    "Timeframe": tf_name,
+                    "Pattern": pattern,
+                    "Type": z_type,
+                    "Base Count": num_base,
+                    "Legout Count": legout_count,
+                    "Status": status,
+                    "Proximal": round(proximal, 4),
+                    "Distal": round(distal, 4),
+                    "Formed At": df.index[i].strftime('%Y-%m-%d %H:%M')
                 })
     return zones
 
 # -------------------------------------------------------------------
-# AUTOMATED PIPELINE EXECUTION (All 16 Timeframes Active)
+# AUTOMATED PIPELINE EXECUTION
 # -------------------------------------------------------------------
 if __name__ == "__main__":
     assets_master = get_complete_asset_database()
@@ -152,7 +169,7 @@ if __name__ == "__main__":
         "10 Hour": "10h", "16 Hour": "16h", "Daily": "1d", "Weekly": "1wk"
     }
     
-    print("Starting master global asset multi-structural sweep...")
+    print("Starting structural global sweep with premium alert formatting...")
     for category, symbols in assets_master.items():
         for symbol in symbols:
             for tf_label, tf_code in target_timeframes.items():
@@ -172,17 +189,22 @@ if __name__ == "__main__":
                     fresh_zones = scan_supply_demand_zones(processed_feed, symbol, tf_label)
                     
                     for zone in fresh_zones:
-                        emoji = "🟢 AUTOMATIC DEMAND" if "Demand" in zone['Zone Type'] else "🔴 AUTOMATIC SUPPLY"
+                        emoji = "🟢" if zone['Type'] == "Demand" else "🔴"
                         alert_msg = (
-                            f"🤖 *AUTO-SCANNER ALERT*\n\n"
-                            f"{emoji}\n"
-                            f"🔹 *Asset:* `{zone['Symbol']}`\n"
-                            f"⏱️ *Timeframe:* {zone['Timeframe']}\n"
-                            f"📌 *Proximal:* `{zone['Proximal']}`\n"
-                            f"🎚️ *Distal:* `{zone['Distal']}`\n"
-                            f"📅 *Formed At:* {zone['Pattern Time']}"
+                            f"{emoji} *NEW ZONE DETECTED* {emoji}\n\n"
+                            f"▪️ *SYMBOL :* `{zone['Symbol']}`\n"
+                            f"▪️ *TIMEFRAME :* `{zone['Timeframe']}`\n"
+                            f"▪️ *PATTERN :* `{zone['Pattern']}`\n"
+                            f"▪️ *TYPE :* `{zone['Type'].upper()}`\n"
+                            f"▪️ *BASE COUNT :* `{zone['Base Count']}`\n"
+                            f"▪️ *LEGOUT COUNT :* `{zone['Legout Count']}`\n"
+                            f"▪️ *STATUS :* `{zone['Status']}`\n"
+                            f"▪️ *PROXIMAL LINE :* `{zone['Proximal']}`\n"
+                            f"▪️ *DISTAL LINE :* `{zone['Distal']}`\n"
+                            f"▪️ *DATE OF ZONE FORMED :* `{zone['Formed At']}`\n\n"
+                            f"📈 _Scanner powered by Global Bot System_"
                         )
                         send_telegram_alert(alert_msg)
                 except Exception as e:
                     continue
-    print("Background master sweep finished successfully.")
+    print("Sweep finished successfully.")

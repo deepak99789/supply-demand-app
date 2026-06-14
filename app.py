@@ -268,8 +268,8 @@ if send_alerts and not master_df.empty:
             f"▪️ *TARGET (1:2) :* `{alert_row['Target (1:2)']}`\n"
             f"▪️ *DATE OF ZONE FORMED :* `{alert_row['Formed At']}`"
         )
-        send_market_specific_alert(market_cat, alert_msg)
-            if not fresh_only_df.empty:
+        send_market_specific_alert(market_cat, alert_msg)                                                                        
+        if not fresh_only_df.empty:
                 st.info("📢 Fresh zones have been sent to their specific Telegram channels!")
 
         # Metrics Panel

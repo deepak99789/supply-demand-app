@@ -9,14 +9,14 @@ st.set_page_config(layout="wide", page_title="Institutional Supply/Demand Matrix
 
 # Centered Title Layout
 st.markdown("<h1 style='text-align: center; color: #2ecc71;'>⚡ Institutional Supply & Demand Matrix Scanner</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #bdc3c7;'>Multi-Asset, Multi-Timeframe Institutional Cluster Intelligence System with Telegram Alerts</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #bdc3c7;'>Multi-Asset, Multi-Timeframe Institutional Cluster Intelligence System with Premium Alerts</p>", unsafe_allow_html=True)
 st.markdown("---")
 
 # -------------------------------------------------------------------
 # ⚙️ TELEGRAM CONFIGURATION (Apna Token aur Chat ID Yahan Dalein)
 # -------------------------------------------------------------------
-TELEGRAM_TOKEN = "8781917241:AAFfyCdiJRCx321U_kVp0pJAe1fhKYcS5BU" # <-- Apne bot ka token yahan dalein
-TELEGRAM_CHAT_ID = "513065799" # <-- Apni chat id yahan dalein
+TELEGRAM_TOKEN = "8781917241:AAFfyCdiJRCx321U_kVp0pJAe1fhKYcS5BU"  # <-- Apne bot ka token yahan dalein
+TELEGRAM_CHAT_ID = "513065799"  # <-- Apni chat id yahan dalein
 
 def send_telegram_alert(message):
     if TELEGRAM_TOKEN == "YAHAN_APNA_BOT_TOKEN_PASTE_KAREIN" or TELEGRAM_CHAT_ID == "YAHAN_APNI_CHAT_ID_PASTE_KAREIN":
@@ -50,27 +50,17 @@ def get_complete_asset_database():
         ],
         "US Stocks (Nasdaq 100)": [
             "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "AVGO", "PEP", "COST",
-            "CSCO", "TMUS", "ADBE", "NFLX", "AMD", "CMCSA", "TXN", "QCOM", "INTC", "AMGN",
-            "ISRG", "HON", "BKNG", "MDLZ", "VRTX", "GILD", "ADP", "REGN", "PANW", "MU",
-            "LRCX", "MELI", "SNPS", "KLAC", "CDNS", "CHTR", "MAR", "ORLY", "ASML", "NXPI",
-            "CTAS", "WDAY", "MNST", "ROST", "ADSK", "PDD", "PAYX", "PCAR", "ILMN", "GEHC",
-            "DLTR", "AEP", "ODFL", "AZN", "EXC", "IDXX", "KDP", "LULU", "BIIB", "MCHP",
-            "FAST", "CSX", "FITB", "VRSK", "TEAM", "ANSS", "DXCM", "DDOG", "FANG",
-            "WBD", "ALGN", "CEG", "SIRI", "ZM", "EBAY", "JD", "LCID", "ABNB", "ZS", 
-            "GFS", "MRVL", "OKTA", "SWKS", "NTES", "DOCU", "AMAT", "EA", "CTSH", "CZR", 
-            "MNDY", "COIN", "HOOD", "ARM"
+            "CSCO", "TMUS", "ADBE", "NFLX", "AMD", "CMCSA", "TXN", "QCOM", "INTC", "AMGN"
         ],
         "Forex (Majors, Minors & Crosses)": [
             "EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X", "USDCAD=X", "NZDUSD=X", "USDCHF=X",
-            "EURGBP=X", "EURJPY=X", "GBPJPY=X", "AUDJPY=X", "EURCAD=X", "EURCHF=X", "GBPCAD=X",
-            "CHFJPY=X", "NZDJPY=X", "CADJPY=X", "AUDCAD=X", "AUDCHF=X", "AUDNZD=X", "EURAUD=X",
-            "EURNZD=X", "GBPAUD=X", "GBPNZD=X", "GBPCHF=X", "CADCHF=X", "NZDCHF=X"
+            "EURGBP=X", "EURJPY=X", "GBPJPY=X", "AUDJPY=X", "EURCAD=X", "EURCHF=X", "GBPCAD=X"
         ],
         "Crypto": [
-            "BTC-USD", "ETH-USD", "SOL-USD", "DOGE-USD", "BNB-USD", "ADA-USD", "XRP-USD", "DOT-USD", "SHIB-USD", "LTC-USD", "LINK-USD", "AVAX-USD", "MATIC-USD"
+            "BTC-USD", "ETH-USD", "SOL-USD"
         ],
         "Commodities": [
-            "GC=F", "CL=F", "SI=F", "NG=F", "BZ=F", "HG=F", "ZC=F", "ZO=F", "PL=F", "PA=F"
+            "GC=F", "SI=F", "HG=F", "ZN=F", "CL=F", "NG=F"
         ]
     }
 
@@ -99,24 +89,27 @@ def resample_data(df, timeframe_str):
 # -------------------------------------------------------------------
 def scan_supply_demand_zones(df, symbol_name, tf_name):
     zones = []
-    if len(df) < 10: return zones
+    if len(df) < 12: return zones
     df = df.copy()
     df['candle_size'] = (df['High'] - df['Low']).abs()
     df['body_size'] = (df['Close'] - df['Open']).abs()
     df['is_green'] = df['Close'] > df['Open']
     df['body_ratio'] = (df['body_size'] / df['candle_size'].replace(0, 0.0001)) * 100
 
-    for i in range(5, len(df) - 2):
+    for i in range(5, len(df) - 3):
         for num_base in [1, 2, 3]:
             legin_idx = i - 1
             base_indices = list(range(i, i + num_base))
             legout_idx = i + num_base
-            follow_up_idx = legout_idx + 1
             
-            if follow_up_idx >= len(df): continue
-            legin, legout, follow_up, bases = df.iloc[legin_idx], df.iloc[legout_idx], df.iloc[follow_up_idx], df.iloc[base_indices]
+            if legout_idx >= len(df): continue
+            
+            legin = df.iloc[legin_idx]
+            legout = df.iloc[legout_idx]
+            bases = df.iloc[base_indices]
             
             if legin['body_ratio'] < 60 or legout['body_ratio'] < 60: continue
+            
             valid_bases = True
             for _, base in bases.iterrows():
                 if base['body_size'] > (legin['body_size'] * 0.5):
@@ -124,46 +117,54 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
                     break
             if not valid_bases: continue
             if legout['body_size'] <= legin['body_size']: continue
-            if legout['is_green'] != follow_up['is_green']: continue
                 
+            legout_count = 1
+            direction_green = legout['is_green']
+            for k in range(legout_idx + 1, len(df)):
+                if df.iloc[k]['is_green'] == direction_green and df.iloc[k]['body_ratio'] >= 50:
+                    legout_count += 1
+                else:
+                    break
+                    
             legin_green, legout_green = legin['is_green'], legout['is_green']
-            zone_type, proximal, distal = None, 0.0, 0.0
+            pattern, z_type, proximal, distal = None, None, 0.0, 0.0
             
             if legin_green and legout_green:
-                zone_type = "RBR (Demand)"
+                pattern, z_type = "RBR", "Demand"
                 proximal = bases['High'].max()
                 distal = bases['Low'].min()
             elif legin_green and not legout_green:
-                zone_type = "RBD (Supply)"
+                pattern, z_type = "RBD", "Supply"
                 proximal = bases['Low'].min()
                 distal = bases['High'].max()
             elif not legin_green and legout_green:
-                zone_type = "DBR (Demand)"
+                pattern, z_type = "DBR", "Demand"
                 proximal = bases['High'].max()
                 distal = bases['Low'].min()
             elif not legin_green and not legout_green:
-                zone_type = "DBD (Supply)"
+                pattern, z_type = "DBD", "Supply"
                 proximal = bases['Low'].min()
                 distal = bases['High'].max()
                 
             tested = False
-            for j in range(follow_up_idx + 1, len(df)):
-                if "Demand" in zone_type and df.iloc[j]['Low'] <= proximal:
+            for j in range(legout_idx + 1, len(df)):
+                if "Demand" in z_type and df.iloc[j]['Low'] < distal:
                     tested = True
                     break
-                if "Supply" in zone_type and df.iloc[j]['High'] >= proximal:
+                if "Supply" in z_type and df.iloc[j]['High'] > distal:
                     tested = True
                     break
                     
             zones.append({
-                "Symbol": symbol_name, "Timeframe": tf_name, "Pattern Time": df.index[i].strftime('%Y-%m-%d %H:%M'),
-                "Zone Type": zone_type, "Proximal": round(proximal, 4), "Distal": round(distal, 4),
-                "Status": "Tested" if tested else "Fresh", "Base Count": num_base
+                "Symbol": symbol_name, "Timeframe": tf_name, "Pattern": pattern, "Type": z_type,
+                "Proximal": round(proximal, 4), "Distal": round(distal, 4),
+                "Status": "VIOLATED" if tested else "FRESH", "Base Count": num_base, "Legout Count": legout_count,
+                "Formed At": df.index[i].strftime('%Y-%m-%d %H:%M')
             })
     return zones
 
 # -------------------------------------------------------------------
-# MAIN CENTER SCREEN CONTROL PANEL LAYOUT
+# MAIN CONTROL PANEL LAYOUT
 # -------------------------------------------------------------------
 st.markdown("### 🎛️ Scanner Control Matrix")
 
@@ -205,7 +206,7 @@ if run_scan_btn:
         
     all_detected_zones = []
     
-    with st.spinner("Executing structural wave analysis over cloud data streams..."):
+    with st.spinner("Executing structural wave analysis over data streams..."):
         for symbol in target_symbols:
             for tf_label in selected_tf_labels:
                 tf_code = timeframe_dictionary[tf_label]
@@ -229,35 +230,44 @@ if run_scan_btn:
 
     if all_detected_zones:
         master_df = pd.DataFrame(all_detected_zones)
-        if zone_filter_mode != "All":
-            master_df = master_df[master_df["Status"] == zone_filter_mode]
+        
+        # Mapping filter text to match new upper case STATUS
+        if zone_filter_mode == "Fresh":
+            master_df = master_df[master_df["Status"] == "FRESH"]
+        elif zone_filter_mode == "Tested":
+            master_df = master_df[master_df["Status"] == "VIOLATED"]
             
         st.success(f"📊 Matrix Sweep Completed! Found {len(master_df)} valid structure points.")
         
         if send_alerts and not master_df.empty:
-            fresh_only_df = master_df[master_df["Status"] == "Fresh"]
+            fresh_only_df = master_df[master_df["Status"] == "FRESH"]
             if not fresh_only_df.empty:
                 for _, alert_row in fresh_only_df.iterrows():
-                    emoji = "🟢 DEMAND ZONE" if "Demand" in alert_row['Zone Type'] else "🔴 SUPPLY ZONE"
+                    emoji = "🟢" if alert_row['Type'] == "Demand" else "🔴"
                     alert_msg = (
-                        f"🚨 *NEW INSTALMENT ZONE SPOTTED*\n\n"
-                        f"{emoji}\n"
-                        f"🔹 *Asset:* `{alert_row['Symbol']}`\n"
-                        f"⏱️ *Timeframe:* {alert_row['Timeframe']}\n"
-                        f"📌 *Proximal:* `{alert_row['Proximal']}`\n"
-                        f"🎚️ *Distal:* `{alert_row['Distal']}`\n"
-                        f"📅 *Formed At:* {alert_row['Pattern Time']}"
+                        f"{emoji} *NEW ZONE DETECTED* {emoji}\n\n"
+                        f"▪️ *SYMBOL :* `{alert_row['Symbol']}`\n"
+                        f"▪️ *TIMEFRAME :* `{alert_row['Timeframe']}`\n"
+                        f"▪️ *PATTERN :* `{alert_row['Pattern']}`\n"
+                        f"▪️ *TYPE :* `{alert_row['Type'].upper()}`\n"
+                        f"▪️ *BASE COUNT :* `{alert_row['Base Count']}`\n"
+                        f"▪️ *LEGOUT COUNT :* `{alert_row['Legout Count']}`\n"
+                        f"▪️ *STATUS :* `{alert_row['Status']}`\n"
+                        f"▪️ *PROXIMAL LINE :* `{alert_row['Proximal']}`\n"
+                        f"▪️ *DISTAL LINE :* `{alert_row['Distal']}`\n"
+                        f"▪️ *DATE OF ZONE FORMED :* `{alert_row['Formed At']}`\n\n"
+                        f"📈 _Scanner powered by Global Bot System_"
                     )
                     send_telegram_alert(alert_msg)
                 st.info("📢 Fresh zones have been broadcasted to your Telegram Bot successfully!")
 
         m1, m2, m3 = st.columns(3)
         m1.metric("Total Scanned Combos", f"{len(target_symbols)} Assets x {len(selected_tf_labels)} TFs")
-        m2.metric("Fresh Active Zones", len(master_df[master_df["Status"] == "Fresh"]))
-        m3.metric("Tested Zones Logged", len(master_df[master_df["Status"] == "Tested"]))
+        m2.metric("Fresh Active Zones", len(master_df[master_df["Status"] == "FRESH"]))
+        m3.metric("Violated Zones Logged", len(master_df[master_df["Status"] == "VIOLATED"]))
         
         st.subheader("📋 Core Structural Database Logs")
-        st.dataframe(master_df.sort_values(by="Pattern Time", ascending=False), use_container_width=True)
+        st.dataframe(master_df.sort_values(by="Formed At", ascending=False), use_container_width=True)
         
         if len(target_symbols) == 1 and not master_df.empty:
             st.subheader(f"📈 Real-time Visual Layer Map ({target_symbols[0]})")
@@ -271,8 +281,8 @@ if run_scan_btn:
                 chart_feed = resample_data(yf.Ticker(target_symbols[0]).history(period=last_period, interval=last_fetch), last_tf_code)
                 fig = go.Figure(data=[go.Candlestick(x=chart_feed.index, open=chart_feed['Open'], high=chart_feed['High'], low=chart_feed['Low'], close=chart_feed['Close'], name="Price Feed")])
                 for _, row in master_df[master_df["Symbol"] == target_symbols[0]].tail(10).iterrows():
-                    shape_color = "rgba(46, 204, 113, 0.14)" if "Demand" in row['Zone Type'] else "rgba(231, 76, 60, 0.14)"
-                    try: fig.add_shape(type="rect", x0=row['Pattern Time'], y0=row['Distal'], x1=chart_feed.index[-1], y1=row['Proximal'], fillcolor=shape_color, line=dict(width=0))
+                    shape_color = "rgba(46, 204, 113, 0.14)" if "Demand" in row['Type'] else "rgba(231, 76, 60, 0.14)"
+                    try: fig.add_shape(type="rect", x0=row['Formed At'], y0=row['Distal'], x1=chart_feed.index[-1], y1=row['Proximal'], fillcolor=shape_color, line=dict(width=0))
                     except: pass
                 fig.update_layout(template="plotly_dark", height=600, xaxis_rangeslider_visible=False)
                 st.plotly_chart(fig, use_container_width=True)

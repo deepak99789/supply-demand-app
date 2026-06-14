@@ -15,8 +15,8 @@ st.markdown("---")
 # -------------------------------------------------------------------
 # ⚙️ TELEGRAM CONFIGURATION (Apna Token aur Chat ID Yahan Dalein)
 # -------------------------------------------------------------------
-TELEGRAM_TOKEN = "8781917241:AAFfyCdiJRCx321U_kVp0pJAe1fhKYcS5BU"  # <-- Apne bot ka token yahan dalein
-TELEGRAM_CHAT_ID = "513065799"  # <-- Apni chat id yahan dalein
+TELEGRAM_TOKEN = "YAHAN_APNA_BOT_TOKEN_PASTE_KAREIN"  # <-- Apne bot ka token yahan dalein
+TELEGRAM_CHAT_ID = "YAHAN_APNI_CHAT_ID_PASTE_KAREIN"  # <-- Chat ID daalna na bhulein
 
 def send_telegram_alert(message):
     if TELEGRAM_TOKEN == "YAHAN_APNA_BOT_TOKEN_PASTE_KAREIN" or TELEGRAM_CHAT_ID == "YAHAN_APNI_CHAT_ID_PASTE_KAREIN":
@@ -85,7 +85,7 @@ def resample_data(df, timeframe_str):
     return df.resample(rule).agg({'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'}).dropna()
 
 # -------------------------------------------------------------------
-# S&D CORE SCANNING ENGINE
+# ADVANCED S&D CORE SCANNING ENGINE (Fresh, SL Hit, Target Hit 1:3 RR)
 # -------------------------------------------------------------------
 def scan_supply_demand_zones(df, symbol_name, tf_name):
     zones = []
@@ -146,19 +146,50 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
                 proximal = bases['Low'].min()
                 distal = bases['High'].max()
                 
-            tested = False
+            # Dynamic Target 1:3 Calculation
+            zone_size = abs(proximal - distal)
+            if z_type == "Demand":
+                target_price = proximal + (zone_size * 3)
+            else:
+                target_price = proximal - (zone_size * 3)
+
+            # Integrity Tracking Logic
+            status = "FRESH"
+            entered_zone = False
+            
             for j in range(legout_idx + 1, len(df)):
-                if "Demand" in z_type and df.iloc[j]['Low'] < distal:
-                    tested = True
-                    break
-                if "Supply" in z_type and df.iloc[j]['High'] > distal:
-                    tested = True
-                    break
-                    
+                current_low = df.iloc[j]['Low']
+                current_high = df.iloc[j]['High']
+                
+                if z_type == "Demand":
+                    # Check if price entered the zone
+                    if current_low <= proximal:
+                        entered_zone = True
+                    # If entered, check if it hit SL or Target
+                    if entered_zone:
+                        if current_low < distal:
+                            status = "SL HIT"
+                            break
+                        elif current_high >= target_price:
+                            status = "TARGET"
+                            break
+                else: # Supply Zone
+                    # Check if price entered the zone
+                    if current_high >= proximal:
+                        entered_zone = True
+                    # If entered, check if it hit SL or Target
+                    if entered_zone:
+                        if current_high > distal:
+                            status = "SL HIT"
+                            break
+                        elif current_low <= target_price:
+                            status = "TARGET"
+                            break
+                            
             zones.append({
                 "Symbol": symbol_name, "Timeframe": tf_name, "Pattern": pattern, "Type": z_type,
-                "Proximal": round(proximal, 4), "Distal": round(distal, 4),
-                "Status": "VIOLATED" if tested else "FRESH", "Base Count": num_base, "Legout Count": legout_count,
+                "Proximal": round(proximal, 4), "Distal": round(distal, 4), "Target (1:3)": round(target_price, 4),
+                "Status": status, "Base Count": num_base, "Legout Count": legout_count,
                 "Formed At": df.index[i].strftime('%Y-%m-%d %H:%M')
             })
     return zones
@@ -185,7 +216,8 @@ timeframe_dictionary = {
 with row2_col1:
     selected_tf_labels = st.multiselect("3. Select Timeframes", list(timeframe_dictionary.keys()), default=["1 Hour"])
 with row2_col2:
-    zone_filter_mode = st.radio("4. Target Zone Integrity Condition", ["All", "Fresh", "Tested"], horizontal=True)
+    # UPDATED INTEGRITY CONDITION AS PER USER REQUEST
+    zone_filter_mode = st.radio("4. Target Zone Integrity Condition", ["FRESH", "SL HIT", "TARGET", "ALL"], horizontal=True)
 
 st.markdown("##### 🔍 Quick External Ticker Override")
 quick_search = st.text_input("Type any unique global asset symbol (e.g., GOOG, TCS.NS, ETH-USD):", "").strip()
@@ -231,14 +263,13 @@ if run_scan_btn:
     if all_detected_zones:
         master_df = pd.DataFrame(all_detected_zones)
         
-        # Mapping filter text to match new upper case STATUS
-        if zone_filter_mode == "Fresh":
-            master_df = master_df[master_df["Status"] == "FRESH"]
-        elif zone_filter_mode == "Tested":
-            master_df = master_df[master_df["Status"] == "VIOLATED"]
+        # Applying dynamic filters based on the new system
+        if zone_filter_mode != "ALL":
+            master_df = master_df[master_df["Status"] == zone_filter_mode]
             
-        st.success(f"📊 Matrix Sweep Completed! Found {len(master_df)} valid structure points.")
+        st.success(f"📊 Matrix Sweep Completed! Found {len(master_df)} matching structure points.")
         
+        # Telegram Broadcast System
         if send_alerts and not master_df.empty:
             fresh_only_df = master_df[master_df["Status"] == "FRESH"]
             if not fresh_only_df.empty:
@@ -256,36 +287,70 @@ if run_scan_btn:
                         f"▪️ *PROXIMAL LINE :* `{alert_row['Proximal']}`\n"
                         f"▪️ *DISTAL LINE :* `{alert_row['Distal']}`\n"
                         f"▪️ *DATE OF ZONE FORMED :* `{alert_row['Formed At']}`\n\n"
-                        
+                        f"📈 _Scanner powered by Global Bot System_"
                     )
                     send_telegram_alert(alert_msg)
                 st.info("📢 Fresh zones have been broadcasted to your Telegram Bot successfully!")
 
+        # Metrics Panel
         m1, m2, m3 = st.columns(3)
         m1.metric("Total Scanned Combos", f"{len(target_symbols)} Assets x {len(selected_tf_labels)} TFs")
         m2.metric("Fresh Active Zones", len(master_df[master_df["Status"] == "FRESH"]))
-        m3.metric("Violated Zones Logged", len(master_df[master_df["Status"] == "VIOLATED"]))
+        m3.metric("SL / Target Hits Tracked", len(master_df[master_df["Status"].isin(["SL HIT", "TARGET"])]))
+        
+        # PERFECT COLUMN ORDERING WITH TARGET COLUMN INCLUDED
+        clean_columns = ["Symbol", "Timeframe", "Pattern", "Type", "Base Count", "Legout Count", "Status", "Proximal", "Distal", "Target (1:3)", "Formed At"]
+        master_df = master_df[clean_columns]
         
         st.subheader("📋 Core Structural Database Logs")
         st.dataframe(master_df.sort_values(by="Formed At", ascending=False), use_container_width=True)
         
-        if len(target_symbols) == 1 and not master_df.empty:
-            st.subheader(f"📈 Real-time Visual Layer Map ({target_symbols[0]})")
-            last_tf_label = selected_tf_labels[-1]
-            last_tf_code = timeframe_dictionary[last_tf_label]
-            if last_tf_code in ["5m", "15m", "30m", "45m", "75m", "125m"]: last_fetch, last_period = "5m", "59d"
-            elif last_tf_code in ["1h", "2h", "4h", "5h", "6h", "8h", "10h", "16h"]: last_fetch, last_period = "1h", "360d"
-            else: last_fetch, last_period = "1d", "5y"
+        # LIVE VISUAL CHART MATRIX WITH TARGET LINES
+        st.markdown("### 🔍 Live Visual Chart Matrix (Click Expand to View Chart)")
+        
+        for idx, row in master_df.sort_values(by="Formed At", ascending=False).iterrows():
+            status_emoji = "🟢 Demand" if row['Type'] == "Demand" else "🔴 Supply"
+            expander_title = f"📈 {row['Symbol']} | {row['Timeframe']} | {row['Pattern']} | Status: {row['Status']} | formed at {row['Formed At']}"
             
-            try:
-                chart_feed = resample_data(yf.Ticker(target_symbols[0]).history(period=last_period, interval=last_fetch), last_tf_code)
-                fig = go.Figure(data=[go.Candlestick(x=chart_feed.index, open=chart_feed['Open'], high=chart_feed['High'], low=chart_feed['Low'], close=chart_feed['Close'], name="Price Feed")])
-                for _, row in master_df[master_df["Symbol"] == target_symbols[0]].tail(10).iterrows():
-                    shape_color = "rgba(46, 204, 113, 0.14)" if "Demand" in row['Type'] else "rgba(231, 76, 60, 0.14)"
-                    try: fig.add_shape(type="rect", x0=row['Formed At'], y0=row['Distal'], x1=chart_feed.index[-1], y1=row['Proximal'], fillcolor=shape_color, line=dict(width=0))
-                    except: pass
-                fig.update_layout(template="plotly_dark", height=600, xaxis_rangeslider_visible=False)
-                st.plotly_chart(fig, use_container_width=True)
-            except: pass
+            with st.expander(expander_title):
+                curr_tf_code = timeframe_dictionary[row['Timeframe']]
+                if curr_tf_code in ["5m", "15m", "30m", "45m", "75m", "125m"]: last_fetch, last_period = "5m", "59d"
+                elif curr_tf_code in ["1h", "2h", "4h", "5h", "6h", "8h", "10h", "16h"]: last_fetch, last_period = "1h", "360d"
+                else: last_fetch, last_period = "1d", "5y"
+                
+                try:
+                    chart_feed = resample_data(yf.Ticker(row['Symbol']).history(period=last_period, interval=last_fetch), curr_tf_code)
+                    
+                    if not chart_feed.empty:
+                        fig = go.Figure(data=[go.Candlestick(
+                            x=chart_feed.index, open=chart_feed['Open'], high=chart_feed['High'], 
+                            low=chart_feed['Low'], close=chart_feed['Close'], name="Price Feed"
+                        )])
+                        
+                        shape_color = "rgba(46, 204, 113, 0.15)" if row['Type'] == "Demand" else "rgba(231, 76, 60, 0.15)"
+                        line_color = "#2ecc71" if row['Type'] == "Demand" else "#e74c3c"
+                        
+                        # Draw Zone Block Box
+                        fig.add_shape(
+                            type="rect", x0=row['Formed At'], y0=row['Distal'], x1=chart_feed.index[-1], y1=row['Proximal'],
+                            fillcolor=shape_color, line=dict(color=line_color, width=1)
+                        )
+                        
+                        # Draw 1:3 Target Line (Blue Dashed Line)
+                        fig.add_shape(
+                            type="line", x0=row['Formed At'], y0=row['Target (1:3)'], x1=chart_feed.index[-1], y1=row['Target (1:3)'],
+                            line=dict(color="#3498db", width=2, dash="dash"), name="Target (1:3)"
+                        )
+                        
+                        fig.update_layout(
+                            title=f"{row['Symbol']} {row['Timeframe']} - Institutional Map (Target 1:3 Line Marked In Blue)",
+                            template="plotly_dark", height=450, xaxis_rangeslider_visible=False,
+                            margin=dict(l=20, r=20, t=40, b=20)
+                        )
+                        st.plotly_chart(fig, use_container_width=True, key=f"chart_{row['Symbol']}_{idx}")
+                    else:
+                        st.error("Could not render data matrix for this ticker.")
+                except Exception as chart_err:
+                    st.error(f"Chart Render Error: {chart_err}")
     else:
         st.info("No corporate structural clusters detected matching the filter rules with current pipeline settings.")

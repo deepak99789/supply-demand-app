@@ -1,0 +1,5 @@
+{
+    "allowed_bases": [1, 2],
+    "allowed_legouts": [1],
+    "rules": ["candle_behinde_legin", "whitearea_check"]
+}

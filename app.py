@@ -256,7 +256,7 @@ if run_scan_btn:
                         f"▪️ *PROXIMAL LINE :* `{alert_row['Proximal']}`\n"
                         f"▪️ *DISTAL LINE :* `{alert_row['Distal']}`\n"
                         f"▪️ *DATE OF ZONE FORMED :* `{alert_row['Formed At']}`\n\n"
-                        f"📈 _Scanner powered by Global Bot System_"
+                        
                     )
                     send_telegram_alert(alert_msg)
                 st.info("📢 Fresh zones have been broadcasted to your Telegram Bot successfully!")

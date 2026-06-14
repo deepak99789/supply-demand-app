@@ -7,8 +7,8 @@ import os
 # -------------------------------------------------------------------
 # ⚙️ TELEGRAM CONFIGURATION (Apna Token aur Chat ID Yahan Dalein)
 # -------------------------------------------------------------------
-TELEGRAM_TOKEN = "8781917241:AAFfyCdiJRCx321U_kVp0pJAe1fhKYcS5BU"  # <-- Apne bot ka token yahan dalein
-TELEGRAM_CHAT_ID = "513065799"  # <-- Apni chat id yahan dalein
+TELEGRAM_TOKEN = "YAHAN_APNA_BOT_TOKEN_PASTE_KAREIN"  # <-- Token daalna na bhulein
+TELEGRAM_CHAT_ID = "YAHAN_APNI_CHAT_ID_PASTE_KAREIN"  # <-- Chat ID daalna na bhulein
 
 def send_telegram_alert(message):
     if TELEGRAM_TOKEN == "YAHAN_APNA_BOT_TOKEN_PASTE_KAREIN" or TELEGRAM_CHAT_ID == "YAHAN_APNI_CHAT_ID_PASTE_KAREIN":
@@ -21,35 +21,56 @@ def send_telegram_alert(message):
         print(f"Telegram Error: {e}")
 
 # -------------------------------------------------------------------
-# MASTER DATABASE (Nifty 100, Forex, Crypto)
+# MASTER DATABASE (Filtered Nifty, Nasdaq, All Forex, All Commodities)
 # -------------------------------------------------------------------
 def get_complete_asset_database():
     return {
-        "Indian Stocks (Nifty 100)": [
-            "ABB.NS", "ACC.NS", "ADANIENT.NS", "ADANIGREEN.NS", "ADANIPORTS.NS", "ADANIPOWER.NS", "ATGL.NS", "AMBUJACEM.NS", "APOLLOHOSP.NS", "ASHOKLEY.NS",
-            "ASIANPAINT.NS", "ASTRAL.NS", "AXISBANK.NS", "BAJAJ-AUTO.NS", "BAJFINANCE.NS", "BAJAJFINSV.NS", "BALKRISIND.NS", "BANDHANBNK.NS", "BANKBARODA.NS",
-            "BERGEPAINT.NS", "BHARATFORG.NS", "BHEL.NS", "BPCL.NS", "BHARTIARTL.NS", "BIOCON.NS", "BOSCHLTD.NS", "BRITANNIA.NS", "CANBK.NS", "CGPOWER.NS",
-            "CHOLAMAND.NS", "CIPLA.NS", "COALINDIA.NS", "COFORGE.NS", "COLPAL.NS", "CONCOR.NS", "CUMMINSIND.NS", "DLF.NS", "DABUR.NS", "DIVISLAB.NS",
-            "DRREDDY.NS", "EICHERMOT.NS", "GAIL.NS", "GMRINFRA.NS", "GODREJCP.NS", "GODREJPROP.NS", "GRASIM.NS", "HCLTECH.NS", "HDFCBANK.NS", "HDFCLIFE.NS",
-            "HAVELLS.NS", "HEROMOTOCO.NS", "HINDALCO.NS", "HAL.NS", "HINDUNILVR.NS", "ICICIBANK.NS", "ICICIGI.NS", "ICICIPRULI.NS", "ITC.NS",
-            "INDIANB.NS", "INDHOTEL.NS", "IOC.NS", "IRCTC.NS", "IRFC.NS", "IGL.NS", "INDUSTOWER.NS", "INDUSINDBK.NS", "INFY.NS", "INTERGLOBE.NS",
-            "JINDALSTEL.NS", "JIOFIN.NS", "JSWSTEEL.NS", "JUBLFOOD.NS", "KPITTECH.NS", "KOTAKBANK.NS", "LT.NS", "LTIM.NS", "LICHSGFIN.NS",
-            "LUPIN.NS", "M&M.NS", "MARICO.NS", "MARUTI.NS", "MAXHEALTH.NS", "NTPC.NS", "NESTLEIND.NS", "OBEROIRLTY.NS", "ONGC.NS", "OIL.NS",
-            "PIIND.NS", "PFC.NS", "POWERGRID.NS", "PNB.NS", "RELIANCE.NS", "SBICARD.NS", "SBILIFE.NS", "SRF.NS", "MOTHERSON.NS", "SHREECEM.NS",
-            "SHRIRAMFIN.NS", "SIEMENS.NS", "SONACOMS.NS", "SBIN.NS", "SUNPHARMA.NS", "SUNTV.NS", "SUZLON.NS", "TATACOMM.NS", "TATACONSUM.NS",
-            "TATAELXSI.NS", "TATAMOTORS.NS", "TATAPOWER.NS", "TATASTEEL.NS", "TCS.NS", "TECHM.NS", "TITAN.NS", "TORNTPHARM.NS", "TRENT.NS",
-            "UPL.NS", "ULTRACEMCO.NS", "VBL.NS", "VEDL.NS", "VOLTAS.NS", "WIPRO.NS", "YESBANK.NS", "ZOMATO.NS"
+        "Indian Stocks (Filtered Alpha Nifty)": [
+            "ADANIENT.NS", "ADANIPORTS.NS", "ADANIPOWER.NS", "AMBUJACEM.NS", "AXISBANK.NS", 
+            "BAJAJ-AUTO.NS", "BAJFINANCE.NS", "BANKBARODA.NS", "BHEL.NS", "BPCL.NS", 
+            "BHARTIARTL.NS", "COALINDIA.NS", "DLF.NS", "GAIL.NS", "GMRINFRA.NS", 
+            "HAL.NS", "HCLTECH.NS", "HDFCBANK.NS", "HINDALCO.NS", "ICICIBANK.NS", 
+            "ITC.NS", "IRCTC.NS", "IRFC.NS", "INDUSTOWER.NS", "INDUSINDBK.NS", 
+            "INFY.NS", "INTERGLOBE.NS", "JINDALSTEL.NS", "JIOFIN.NS", "JSWSTEEL.NS", 
+            "KOTAKBANK.NS", "LT.NS", "M&M.NS", "MARUTI.NS", "NTPC.NS", 
+            "ONGC.NS", "PFC.NS", "POWERGRID.NS", "PNB.NS", "RELIANCE.NS", 
+            "SBIN.NS", "SUNPHARMA.NS", "SUZLON.NS", "TATAMOTORS.NS", "TATAPOWER.NS", 
+            "TATASTEEL.NS", "TCS.NS", "TITAN.NS", "TRENT.NS", "VEDL.NS", "WIPRO.NS", "ZOMATO.NS"
         ],
-        "Forex": ["EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X", "USDCAD=X", "EURGBP=X", "GBPJPY=X"],
-        "Crypto": ["BTC-USD", "ETH-USD", "SOL-USD"]
+        "US Stocks (Top Nasdaq Alpha)": [
+            "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "AVGO", "NFLX", "AMD"
+        ],
+        "Forex (All Majors, Minors & Crosses)": [
+            "EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X", "USDCAD=X", "NZDUSD=X", "USDCHF=X",
+            "EURGBP=X", "EURJPY=X", "GBPJPY=X", "AUDJPY=X", "EURCAD=X", "EURCHF=X", "GBPCAD=X",
+            "CHFJPY=X", "NZDJPY=X", "CADJPY=X", "AUDCAD=X", "AUDCHF=X", "AUDNZD=X", "EURAUD=X",
+            "EURNZD=X", "GBPAUD=X", "GBPNZD=X", "GBPCHF=X", "CADCHF=X", "NZDCHF=X"
+        ],
+        "Crypto": ["BTC-USD", "ETH-USD", "SOL-USD"],
+        "Commodities (Full Suite)": [
+            "GC=F",   # Gold (XAUUSD Future)
+            "SI=F",   # Silver (XAGUSD Future)
+            "HG=F",   # Copper Future
+            "ZN=F",   # Zinc Future
+            "CL=F",   # Crude Oil WTI
+            "BZ=F",   # Brent Crude Oil
+            "NG=F",   # Natural Gas
+            "PL=F",   # Platinum Future
+            "PA=F"    # Palladium Future
+        ]
     }
 
 def resample_data(df, timeframe_str):
     if df.empty: return df
+    df = df.copy()
     if df.index.tz is not None:
         df.index = df.index.tz_localize(None)
-    if timeframe_str in ['1h', '1d']: return df
-    resample_map = {"2h": "2h", "4h": "4h"}
+    if timeframe_str in ['5m', '15m', '30m', '1h', '1d', '1wk']:
+        return df
+    resample_map = {
+        "45m": "45min", "75m": "75min", "125m": "125min", 
+        "2h": "2h", "4h": "4h", "5h": "5h", "6h": "6h", "8h": "8h", "10h": "10h", "16h": "16h"
+    }
     rule = resample_map.get(timeframe_str)
     if not rule: return df
     return df.resample(rule).agg({'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'}).dropna()
@@ -57,6 +78,7 @@ def resample_data(df, timeframe_str):
 def scan_supply_demand_zones(df, symbol_name, tf_name):
     zones = []
     if len(df) < 10: return zones
+    df = df.copy()
     df['candle_size'] = (df['High'] - df['Low']).abs()
     df['body_size'] = (df['Close'] - df['Open']).abs()
     df['is_green'] = df['Close'] > df['Open']
@@ -118,16 +140,29 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
                 })
     return zones
 
+# -------------------------------------------------------------------
+# AUTOMATED PIPELINE EXECUTION (All 16 Timeframes Active)
+# -------------------------------------------------------------------
 if __name__ == "__main__":
     assets_master = get_complete_asset_database()
-    target_timeframes = {"1 Hour": "1h", "2 Hour": "2h", "4 Hour": "4h", "Daily": "1d"}
     
-    print("Starting background multi-asset structural sweep...")
+    target_timeframes = {
+        "5 Min": "5m", "15 Min": "15m", "30 Min": "30m", "45 Min": "45m", "75 Min": "75m", "125 Min": "125m",
+        "1 Hour": "1h", "2 Hour": "2h", "4 Hour": "4h", "5 Hour": "5h", "6 Hour": "6h", "8 Hour": "8h",
+        "10 Hour": "10h", "16 Hour": "16h", "Daily": "1d", "Weekly": "1wk"
+    }
+    
+    print("Starting master global asset multi-structural sweep...")
     for category, symbols in assets_master.items():
         for symbol in symbols:
             for tf_label, tf_code in target_timeframes.items():
-                fetch_interval = "1h" if tf_code in ["1h", "2h", "4h"] else "1d"
-                history_period = "360d" if fetch_interval == "1h" else "5y"
+                
+                if tf_code in ["5m", "15m", "30m", "45m", "75m", "125m"]:
+                    fetch_interval, history_period = "5m", "59d"
+                elif tf_code in ["1h", "2h", "4h", "5h", "6h", "8h", "10h", "16h"]:
+                    fetch_interval, history_period = "1h", "360d"
+                else:
+                    fetch_interval, history_period = "1d", "5y"
                 
                 try:
                     raw_feed = yf.Ticker(symbol).history(period=history_period, interval=fetch_interval)
@@ -150,4 +185,4 @@ if __name__ == "__main__":
                         send_telegram_alert(alert_msg)
                 except Exception as e:
                     continue
-    print("Background sweep finished successfully.")
+    print("Background master sweep finished successfully.")

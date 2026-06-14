@@ -1,4 +1,12 @@
-import os, pandas as pd, yfinance as yf, requests, time
+import streamlit as st
+import pandas as pd
+import yfinance as yf
+import plotly.graph_objects as go
+import requests
+
+# Page Setup
+st.set_page_config(layout="wide", page_title="Institutional Scanner")
+st.markdown("<h1 style='text-align: center; color: #2ecc71;'>⚡ Institutional Matrix Scanner</h1>", unsafe_allow_html=True)
 
 # ----------------- CONFIGURATION -----------------
 TELEGRAM_TOKEN = "8781917241:AAFfyCdiJRCx321U_kVp0pJAe1fhKYcS5BU"
@@ -6,83 +14,72 @@ CHANNEL_IDS = {
     "Indian Stocks": "-1004441153450", "US Stocks": "-1004457256685", 
     "Forex": "-1004448848917", "Commodities": "-1004448848917", "Crypto": "-1004451326458"
 }
-DB_FILE = "zones_db.csv"
 
-# ----------------- ASSETS & TIMEFRAMES -----------------
-ASSETS_MASTER = {
-    "Forex": [
-            "EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X", "USDCAD=X", "NZDUSD=X", "USDCHF=X",
-            "EURGBP=X", "EURJPY=X", "EURAUD=X", "EURCAD=X", "EURCHF=X", "EURNZD=X",
-            "GBPJPY=X", "GBPAUD=X", "GBPCAD=X", "GBPCHF=X", "GBPNZD=X",
-            "AUDJPY=X", "AUDCAD=X", "AUDCHF=X", "AUDNZD=X",
-            "CADJPY=X", "CADCHF=X", "NZDJPY=X", "NZDCAD=X", "NZDCHF=X", "CHFJPY=X",
-            "USDSGD=X", "USDHKD=X", "USDMXN=X", "USDSEK=X", "USDTRY=X", "EURTRY=X", "GBPSEK=X"
-        ], # Baaki pairs yahan add karein
-    "Commodities": [
-            "GC=F", "SI=F", "PL=F", "PA=F", "CL=F", "BZ=F", "NG=F", "HG=F", "RB=F", "HO=F", "ZC=F", "ZS=F", "ZW=F"
-        ],
-    "Indian Stocks": ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ICICIBANK.NS", "SBIN.NS"], # Nifty 100 yahan complete karein
-    "US Stocks": ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA"],
-    "Crypto": ["BTC-USD", "ETH-USD", "SOL-USD"]
-}
-
-TIMEFRAMES_MASTER = {
-    "5 Min": "5m", "15 Min": "15m", "30 Min": "30m", "45 Min": "45m", 
-    "75 Min": "75m", "125 Min": "125m", "1 Hour": "1h", "2 Hour": "2h", 
-    "4 Hour": "4h", "5 Hour": "5h", "6 Hour": "6h", "8 Hour": "8h", 
-    "10 Hour": "10h", "12 Hour": "12h", "16 Hour": "16h", "Daily": "1d", "Weekly": "1wk"
-}
-
-def send_alert(category, message):
+def send_telegram_alert(category, message):
     try:
-        target_id = CHANNEL_IDS.get(category, CHANNEL_IDS["Forex"])
-        requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage", 
-                      json={"chat_id": target_id, "text": message, "parse_mode": "Markdown"})
+        chat_id = CHANNEL_IDS.get(category, "-1004448848917")
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        requests.post(url, json={"chat_id": chat_id, "text": message, "parse_mode": "Markdown"})
     except: pass
 
-def start_automatic_pipeline():
-    if not os.path.exists(DB_FILE): return
-    db_df = pd.read_csv(DB_FILE)
+# ----------------- ASSET DATABASE -----------------
+ASSETS_MASTER = {
+    "Forex": ["EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X"],
+    "Indian Stocks": ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS"],
+    "US Stocks": ["AAPL", "MSFT", "NVDA"],
+    "Crypto": ["BTC-USD", "ETH-USD"],
+    "Commodities": ["GC=F", "CL=F"]
+}
+timeframe_dict = {"5 Min": "5m", "15 Min": "15m", "1 Hour": "1h", "4 Hour": "4h", "Daily": "1d"}
 
-    for idx, row in db_df.iterrows():
-        try:
-            live_price = yf.Ticker(row['Symbol']).history(period="1d").iloc[-1]['Close']
-            gap = abs(row['Proximal'] - row['Distal'])
-
-            # 1. ZONE ENTRY ALERT
-            if row["Triggered"] == "WAITING":
-                if (row['Type'] == "Demand" and live_price <= row['Proximal']) or \
-                   (row['Type'] == "Supply" and live_price >= row['Proximal']):
-                    send_alert(row['Category'], f"📥 *ZONE ENTRY ALERT*\nAsset: {row['Symbol']}\nPrice entered the zone!")
-                    db_df.at[idx, "Triggered"] = "ENTRY_DONE"
-            
-            # 2. PRE-ENTRY WARNING
-            elif row["Triggered"] == "NO":
-                if (row['Type'] == "Demand" and live_price <= (row['Proximal'] + gap)) or \
-                   (row['Type'] == "Supply" and live_price >= (row['Proximal'] - gap)):
-                    send_alert(row['Category'], f"⚠️ *PRE-ENTRY WARNING*\nAsset: {row['Symbol']}\nPrice approaching zone!")
-                    db_df.at[idx, "Triggered"] = "WAITING"
-        except: continue
+# ----------------- SCANNING ENGINE -----------------
+def scan_zones(df, symbol, tf, allowed_bases, allowed_legouts):
+    zones = []
+    df = df.copy()
+    df['body_size'] = (df['Close'] - df['Open']).abs()
+    df['is_green'] = df['Close'] > df['Open']
     
-    db_df.to_csv(DB_FILE, index=False)
+    for i in range(5, len(df) - 3):
+        for num_base in allowed_bases:
+            legout_idx = i + num_base
+            if legout_idx >= len(df): continue
+            
+            # Legout Filter logic
+            legout_count = 1 
+            # (Simplified check for this example)
+            if legout_count not in allowed_legouts: continue
+            
+            # Pattern Detection Logic
+            z_type = "Demand" if df.iloc[i-1]['is_green'] else "Supply"
+            proximal = df.iloc[i:i+num_base]['High'].max() if z_type == "Demand" else df.iloc[i:i+num_base]['Low'].min()
+            
+            zones.append({
+                "Symbol": symbol, "Timeframe": tf, "Type": z_type, 
+                "Proximal": round(proximal, 4), "Base Count": num_base, 
+                "Legout Count": legout_count, "Status": "FRESH"
+            })
+    return zones
 
-def trigger_fresh_alert(new_zone, category):
-    msg = (
-        f"🟢 *NEW FRESH ZONE*\n\n"
-        f"▪️ *SYMBOL :* `{new_zone['Symbol']}`\n"
-        f"▪️ *TIMEFRAME :* `{new_zone['Timeframe']}`\n"
-        f"▪️ *PATTERN :* `{new_zone['Pattern']}`\n"
-        f"▪️ *TYPE :* `{new_zone['Type'].upper()}`\n"
-        f"▪️ *BASE COUNT :* `{new_zone['Base_Count']}`\n"
-        f"▪️ *LEGOUT COUNT :* `{new_zone['Legout_Count']}`\n"
-        f"▪️ *STATUS :* `FRESH`\n"
-        f"▪️ *PROXIMAL LINE :* `{new_zone['Proximal']}`\n"
-        f"▪️ *DISTAL LINE :* `{new_zone['Distal']}`\n"
-        f"▪️ *DATE OF ZONE FORMED :* `{new_zone['Formed_At']}`"
-    )
-    send_alert(category, msg)
+# ----------------- UI -----------------
+market_cat = st.selectbox("Market Category", list(ASSETS_MASTER.keys()))
+selected_symbol = st.selectbox("Symbol", ASSETS_MASTER[market_cat])
+selected_tf = st.multiselect("Timeframes", list(timeframe_dict.keys()), default=["1 Hour"])
+col1, col2 = st.columns(2)
+with col1: selected_bases = st.multiselect("Base Candles", [1, 2, 3], default=[1, 2])
+with col2: selected_legouts = st.multiselect("Legout Count", [1, 2, 3], default=[1])
 
-if __name__ == "__main__":
-    while True:
-        start_automatic_pipeline()
-        time.sleep(300)
+if st.button("🚀 SCAN"):
+    all_zones = []
+    for tf_label in selected_tf:
+        data = yf.Ticker(selected_symbol).history(period="60d", interval=timeframe_dict[tf_label])
+        zones = scan_zones(data, selected_symbol, tf_label, selected_bases, selected_legouts)
+        all_zones.extend(zones)
+    
+    master_df = pd.DataFrame(all_zones)
+    st.dataframe(master_df)
+    
+    if st.button("📢 Send Alerts for Fresh Zones"):
+        for _, row in master_df[master_df['Status'] == 'FRESH'].iterrows():
+            msg = f"🟢 *NEW ZONE*\nSymbol: {row['Symbol']}\nType: {row['Type']}\nProximal: {row['Proximal']}"
+            send_telegram_alert(market_cat, msg)
+        st.success("Alerts Sent!")

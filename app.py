@@ -19,8 +19,8 @@ TELEGRAM_TOKEN = "YAHAN_APNA_BOT_TOKEN_PASTE_KAREIN"
 CHANNEL_IDS = {
     "Indian Stocks (Nifty 100)": "YAHAN_NIFTY_CHANNEL_CHAT_ID_DALEIN",
     "US Stocks (Nasdaq 100)": "YAHAN_US_STOCKS_CHANNEL_CHAT_ID_DALEIN",
-    "Forex (Majors, Minors & Crosses)": "YAHAN_FOREX_COMMODITY_CHANNEL_CHAT_ID_DALEIN",
-    "Commodities": "YAHAN_FOREX_COMMODITY_CHANNEL_CHAT_ID_DALEIN",
+    "Forex (Majors, Minors & Crosses)": "YAHAN_FOREX_CHANNEL_CHAT_ID_DALEIN",
+    "Commodities": "YAHAN_COMMODITY_CHANNEL_CHAT_ID_DALEIN",
     "Crypto": "YAHAN_CRYPTO_CHANNEL_CHAT_ID_DALEIN"
 }
 
@@ -35,7 +35,7 @@ def send_market_specific_alert(category, message):
         pass
 
 # -------------------------------------------------------------------
-# 1. 🎯 COMPLETE ASSETS MASTER DATABASE (FULL 100 US STOCKS ADDED)
+# 🎯 COMPLETE MASTER DATABASE INJECTED (100+100+35+COMMODITIES)
 # -------------------------------------------------------------------
 def get_complete_asset_database():
     return {
@@ -64,38 +64,60 @@ def get_complete_asset_database():
             "AZN", "EXC", "IDXX", "MSI", "CTSH", "FTNT", "GFL", "TEAM", "BKR", "DDOG",
             "PDD", "CEG", "GEHC", "ROST", "FAST", "VRSK", "BILI", "ANSS", "SIRI", "ALGN",
             "EA", "ILMN", "WBD", "MDB", "FANG", "TTWO", "OKTA", "SPLK", "DASH", "ZS",
-            "CRWD", "COGN", "MSTR", "HOOD", "ARM", "PLTR", "SMCI", "APP", "CEG", "AXON"
+            "CRWD", "COGN", "MSTR", "HOOD", "ARM", "PLTR", "SMCI", "APP", "AXON"
         ],
         "Forex (Majors, Minors & Crosses)": [
             "EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X", "USDCAD=X", "NZDUSD=X", "USDCHF=X",
-            "EURGBP=X", "EURJPY=X", "GBPJPY=X", "AUDJPY=X", "EURCAD=X", "EURCHF=X", "GBPCAD=X",
-            "NZDJPY=X", "CADJPY=X", "CHFJPY=X", "AUDCAD=X", "AUDNZD=X", "GBPAUD=X", "EURAUD=X"
+            "EURGBP=X", "EURJPY=X", "EURAUD=X", "EURCAD=X", "EURCHF=X", "EURNZD=X",
+            "GBPJPY=X", "GBPAUD=X", "GBPCAD=X", "GBPCHF=X", "GBPNZD=X",
+            "AUDJPY=X", "AUDCAD=X", "AUDCHF=X", "AUDNZD=X",
+            "CADJPY=X", "CADCHF=X", "NZDJPY=X", "NZDCAD=X", "NZDCHF=X", "CHFJPY=X",
+            "USDSGD=X", "USDHKD=X", "USDMXN=X", "USDSEK=X", "USDTRY=X", "EURTRY=X", "GBPSEK=X"
         ],
         "Commodities": [
-            "GC=F", "SI=F", "HG=F", "CL=F", "NG=F", "BZ=F", "ZO=F", "ZC=F", "ZS=F", "ZM=F"
+            "GC=F", "SI=F", "PL=F", "PA=F", "CL=F", "BZ=F", "NG=F", "HG=F", "RB=F", "HO=F", "ZC=F", "ZS=F", "ZW=F"
         ],
         "Crypto": [
-            "BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "XRP-USD", "ADA-USD", "DOGE-USD", "DOT-USD"
+            "BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "XRP-USD"
         ]
     }
 
 assets_master = get_complete_asset_database()
 
-# -------------------------------------------------------------------
-# RESAMPLING ENGINE
-# -------------------------------------------------------------------
-def resample_data(df, timeframe_str):
-    if df.empty or timeframe_str in ['5m', '15m', '30m', '1h', '1d', '1wk']: return df
+# 🛠️ ALL 17 TIMEFRAMES MASTER CONFIGURATION FOR MANUAL SCANS
+TIMEFRAMES_MASTER = {
+    "5 Min": {"base_interval": "5m", "period": "5d"},
+    "15 Min": {"base_interval": "15m", "period": "5d"},
+    "30 Min": {"base_interval": "30m", "period": "5d"},
+    "45 Min": {"base_interval": "15m", "period": "5d", "resample_rule": "45min"},
+    "75 Min": {"base_interval": "15m", "period": "5d", "resample_rule": "75min"},
+    "125 Min": {"base_interval": "5m", "period": "5d", "resample_rule": "125min"},
+    "1 Hour": {"base_interval": "1h", "period": "360d"},
+    "2 Hour": {"base_interval": "1h", "period": "360d", "resample_rule": "2h"},
+    "4 Hour": {"base_interval": "1h", "period": "360d", "resample_rule": "4h"},
+    "5 Hour": {"base_interval": "1h", "period": "360d", "resample_rule": "5h"},
+    "6 Hour": {"base_interval": "1h", "period": "360d", "resample_rule": "6h"},
+    "8 Hour": {"base_interval": "1h", "period": "360d", "resample_rule": "8h"},
+    "10 Hour": {"base_interval": "1h", "period": "360d", "resample_rule": "10h"},
+    "12 Hour": {"base_interval": "1h", "period": "360d", "resample_rule": "12h"},
+    "16 Hour": {"base_interval": "1h", "period": "360d", "resample_rule": "16h"},
+    "Daily": {"base_interval": "1d", "period": "5y"},
+    "Weekly": {"base_interval": "1wk", "period": "max"}
+}
+
+# Advanced Resampling Engine
+def apply_resampling(df, tf_name):
+    if df.empty: return df
     df = df.copy()
     if df.index.tz is not None: df.index = df.index.tz_localize(None)
-    resample_map = {"45m": "45min", "75m": "75min", "125m": "125min", "2h": "2h", "4h": "4h"}
-    rule = resample_map.get(timeframe_str)
-    if not rule: return df
-    return df.resample(rule).agg({'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'}).dropna()
+    
+    config = TIMEFRAMES_MASTER[tf_name]
+    if "resample_rule" in config:
+        rule = config["resample_rule"]
+        return df.resample(rule).agg({'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'}).dropna()
+    return df
 
-# -------------------------------------------------------------------
-# S&D ENGINE WITH 1:2 RR LOGIC
-# -------------------------------------------------------------------
+# S&D Logic Engine
 def scan_supply_demand_zones(df, symbol_name, tf_name):
     zones = []
     if len(df) < 12: return zones
@@ -175,13 +197,12 @@ with row1_col2:
     selected_symbol_raw = st.selectbox("2. Select Target Ticker / Pair List", symbols_options)
 
 row2_col1, row2_col2 = st.columns(2)
-timeframe_dictionary = {"1 Hour": "1h", "4 Hour": "4h", "Daily": "1d"}
 with row2_col1:
-    selected_tf_labels = st.multiselect("3. Select Timeframes", list(timeframe_dictionary.keys()), default=["1 Hour"])
+    selected_tf_labels = st.multiselect("3. Select Timeframes", list(TIMEFRAMES_MASTER.keys()), default=["1 Hour"])
 with row2_col2:
     zone_filter_mode = st.radio("4. Target Zone Integrity Condition", ["FRESH", "SL HIT", "TARGET", "ALL"], horizontal=True)
 
-send_alerts = st.checkbox("📢 Send Fresh Zones to Segregated Telegram Channels", value=True)
+send_alerts = st.checkbox("📢 Send Fresh Manual Scan Zones to Segregated Telegram Channels", value=True)
 run_scan_btn = st.button("🚀 START STRUCTURAL MATRIX SCAN", use_container_width=True)
 st.markdown("---")
 
@@ -194,14 +215,14 @@ if run_scan_btn:
         
     all_detected_zones = []
     
-    with st.spinner(f"Scanning {len(target_symbols)} assets across selected timeframes... Please wait."):
+    with st.spinner(f"Scanning {len(target_symbols)} assets across custom resampled matrices..."):
         for symbol in target_symbols:
             for tf_label in selected_tf_labels:
-                tf_code = timeframe_dictionary[tf_label]
+                config = TIMEFRAMES_MASTER[tf_label]
                 try:
-                    raw_feed = yf.Ticker(symbol).history(period="360d" if tf_code=="1h" else "5y", interval="1h" if tf_code != "1d" else "1d")
+                    raw_feed = yf.Ticker(symbol).history(period=config["period"], interval=config["base_interval"])
                     if raw_feed.empty: continue
-                    processed_feed = resample_data(raw_feed, tf_code)
+                    processed_feed = apply_resampling(raw_feed, tf_label)
                     all_detected_zones.extend(scan_supply_demand_zones(processed_feed, symbol, tf_label))
                 except Exception:
                     continue
@@ -253,9 +274,9 @@ if run_scan_btn:
         st.markdown("### 🔍 Live Visual Chart Matrix")
         for idx, row in master_df.sort_values(by="Formed At", ascending=False).head(10).iterrows():
             with st.expander(f"📈 {row['Symbol']} | {row['Timeframe']} | {row['Status']}"):
-                curr_tf_code = timeframe_dictionary[row['Timeframe']]
+                config = TIMEFRAMES_MASTER[row['Timeframe']]
                 try:
-                    chart_feed = resample_data(yf.Ticker(row['Symbol']).history(period="360d" if curr_tf_code=="1h" else "5y", interval="1h" if curr_tf_code != "1d" else "1d"), curr_tf_code)
+                    chart_feed = apply_resampling(yf.Ticker(row['Symbol']).history(period=config["period"], interval=config["base_interval"]), row['Timeframe'])
                     if not chart_feed.empty:
                         fig = go.Figure(data=[go.Candlestick(x=chart_feed.index, open=chart_feed['Open'], high=chart_feed['High'], low=chart_feed['Low'], close=chart_feed['Close'], name="Price")])
                         sc = "rgba(46, 204, 113, 0.15)" if row['Type'] == "Demand" else "rgba(231, 76, 60, 0.15)"

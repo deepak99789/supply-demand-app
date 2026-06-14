@@ -240,7 +240,7 @@ if run_scan_btn:
         st.success(f"📊 Matrix Sweep Completed! Displaying {len(master_df)} rows based on filter.")
         
         # Segmented Telegram Dispatch
-       if send_alerts and not master_df.empty:
+if send_alerts and not master_df.empty:
     for _, alert_row in master_df.iterrows():
         # Emoji aur status logic...
         if alert_row['Status'] == "FRESH":

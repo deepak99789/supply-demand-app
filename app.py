@@ -85,7 +85,7 @@ def resample_data(df, timeframe_str):
     return df.resample(rule).agg({'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'}).dropna()
 
 # -------------------------------------------------------------------
-# ADVANCED S&D CORE SCANNING ENGINE (Fresh, SL Hit, Target Hit 1:3 RR)
+# ADVANCED S&D CORE SCANNING ENGINE
 # -------------------------------------------------------------------
 def scan_supply_demand_zones(df, symbol_name, tf_name):
     zones = []
@@ -146,14 +146,14 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
                 proximal = bases['Low'].min()
                 distal = bases['High'].max()
                 
-            # Dynamic Target 1:3 Calculation
+            # Target 1:3 RR Calculation
             zone_size = abs(proximal - distal)
             if z_type == "Demand":
                 target_price = proximal + (zone_size * 3)
             else:
                 target_price = proximal - (zone_size * 3)
 
-            # Integrity Tracking Logic
+            # Execution integrity checking
             status = "FRESH"
             entered_zone = False
             
@@ -162,10 +162,8 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
                 current_high = df.iloc[j]['High']
                 
                 if z_type == "Demand":
-                    # Check if price entered the zone
                     if current_low <= proximal:
                         entered_zone = True
-                    # If entered, check if it hit SL or Target
                     if entered_zone:
                         if current_low < distal:
                             status = "SL HIT"
@@ -173,11 +171,9 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
                         elif current_high >= target_price:
                             status = "TARGET"
                             break
-                else: # Supply Zone
-                    # Check if price entered the zone
+                else: # Supply
                     if current_high >= proximal:
                         entered_zone = True
-                    # If entered, check if it hit SL or Target
                     if entered_zone:
                         if current_high > distal:
                             status = "SL HIT"
@@ -216,7 +212,6 @@ timeframe_dictionary = {
 with row2_col1:
     selected_tf_labels = st.multiselect("3. Select Timeframes", list(timeframe_dictionary.keys()), default=["1 Hour"])
 with row2_col2:
-    # UPDATED INTEGRITY CONDITION AS PER USER REQUEST
     zone_filter_mode = st.radio("4. Target Zone Integrity Condition", ["FRESH", "SL HIT", "TARGET", "ALL"], horizontal=True)
 
 st.markdown("##### 🔍 Quick External Ticker Override")
@@ -263,13 +258,18 @@ if run_scan_btn:
     if all_detected_zones:
         master_df = pd.DataFrame(all_detected_zones)
         
-        # Applying dynamic filters based on the new system
+        # Calculate individual counts BEFORE filtering data for table display
+        total_fresh = len(master_df[master_df["Status"] == "FRESH"])
+        total_target = len(master_df[master_df["Status"] == "TARGET"])
+        total_sl_hit = len(master_df[master_df["Status"] == "SL HIT"])
+        
+        # Apply UI view filter selection
         if zone_filter_mode != "ALL":
             master_df = master_df[master_df["Status"] == zone_filter_mode]
             
         st.success(f"📊 Matrix Sweep Completed! Found {len(master_df)} matching structure points.")
         
-        # Telegram Broadcast System
+        # Telegram Broadcast
         if send_alerts and not master_df.empty:
             fresh_only_df = master_df[master_df["Status"] == "FRESH"]
             if not fresh_only_df.empty:
@@ -292,20 +292,23 @@ if run_scan_btn:
                     send_telegram_alert(alert_msg)
                 st.info("📢 Fresh zones have been broadcasted to your Telegram Bot successfully!")
 
-        # Metrics Panel
-        m1, m2, m3 = st.columns(3)
-        m1.metric("Total Scanned Combos", f"{len(target_symbols)} Assets x {len(selected_tf_labels)} TFs")
-        m2.metric("Fresh Active Zones", len(master_df[master_df["Status"] == "FRESH"]))
-        m3.metric("SL / Target Hits Tracked", len(master_df[master_df["Status"].isin(["SL HIT", "TARGET"])]))
+        # -------------------------------------------------------------------
+        # 🔥 UPGRADED METRICS PANEL WITH INDIVIDUAL SL AND TARGET COUNTS
+        # -------------------------------------------------------------------
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Scanned Combos", f"{len(target_symbols)}A x {len(selected_tf_labels)}TFs")
+        m2.metric("🟢 Fresh Active Zones", total_fresh)
+        m3.metric("🎯 Target Hits (1:3 RR)", total_target)
+        m4.metric("🔴 Stop Loss (SL) Hits", total_sl_hit)
         
-        # PERFECT COLUMN ORDERING WITH TARGET COLUMN INCLUDED
+        # Column Ordering
         clean_columns = ["Symbol", "Timeframe", "Pattern", "Type", "Base Count", "Legout Count", "Status", "Proximal", "Distal", "Target (1:3)", "Formed At"]
         master_df = master_df[clean_columns]
         
         st.subheader("📋 Core Structural Database Logs")
         st.dataframe(master_df.sort_values(by="Formed At", ascending=False), use_container_width=True)
         
-        # LIVE VISUAL CHART MATRIX WITH TARGET LINES
+        # Live Visual Grid Mapping
         st.markdown("### 🔍 Live Visual Chart Matrix (Click Expand to View Chart)")
         
         for idx, row in master_df.sort_values(by="Formed At", ascending=False).iterrows():
@@ -330,13 +333,11 @@ if run_scan_btn:
                         shape_color = "rgba(46, 204, 113, 0.15)" if row['Type'] == "Demand" else "rgba(231, 76, 60, 0.15)"
                         line_color = "#2ecc71" if row['Type'] == "Demand" else "#e74c3c"
                         
-                        # Draw Zone Block Box
                         fig.add_shape(
                             type="rect", x0=row['Formed At'], y0=row['Distal'], x1=chart_feed.index[-1], y1=row['Proximal'],
                             fillcolor=shape_color, line=dict(color=line_color, width=1)
                         )
                         
-                        # Draw 1:3 Target Line (Blue Dashed Line)
                         fig.add_shape(
                             type="line", x0=row['Formed At'], y0=row['Target (1:3)'], x1=chart_feed.index[-1], y1=row['Target (1:3)'],
                             line=dict(color="#3498db", width=2, dash="dash"), name="Target (1:3)"

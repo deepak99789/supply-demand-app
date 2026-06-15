@@ -1,31 +1,34 @@
 name: Hourly Market Zone Scanner
+
 on:
   schedule:
-    - cron: '0 * * * *' 
-  workflow_dispatch: 
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Ye permission bahut zaroori hai!
+      contents: write
     steps:
-    - name: Checkout Repository
+    - name: Checkout Code
       uses: actions/checkout@v3
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
+
     - name: Install Dependencies
-      run: |
-        pip install pandas yfinance requests
-    - name: Run Scanner Pipeline
-      run: |
-        python pipeline.py
-    # --- YAHAN SE ADD KARO ---
-    - name: Commit and Push changes
+      run: pip install pandas yfinance requests
+
+    - name: Run Scanner
+      run: python pipeline.py
+
+    - name: Commit and Push
       run: |
         git config --global user.name 'github-actions'
         git config --global user.email 'github-actions@github.com'
         git add zones_db.csv
-        git commit -m "Auto-update database" || exit 0
+        git commit -m "Auto-update zones_db.csv" || exit 0
         git push

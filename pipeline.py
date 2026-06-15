@@ -102,7 +102,7 @@ def find_latest_zone(df, symbol_name, tf_name, category):
             legin, legout = df.iloc[legin_idx], df.iloc[legout_idx]
             bases = df.iloc[base_indices]
             
-            if legin['body_ratio'] < 60 or legout['body_ratio'] < 60: continue
+            if legin['body_ratio'] < 70 or legout['body_ratio'] < 70: continue
             if legout['body_size'] <= legin['body_size']: continue
             
             legin_green, legout_green = legin['is_green'], legout['is_green']

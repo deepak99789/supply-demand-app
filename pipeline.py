@@ -93,7 +93,7 @@ def find_latest_zone(df, symbol_name, tf_name, category):
     df['body_ratio'] = (df['body_size'] / df['candle_size'].replace(0, 0.0001)) * 100
 
     for i in range(len(df) - 4, 5, -1):
-        for num_base in [1, 2, 3]:
+        for num_base in [1]:
             legin_idx = i - 1
             base_indices = list(range(i, i + num_base))
             legout_idx = i + num_base

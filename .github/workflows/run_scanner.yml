@@ -1,13 +1,13 @@
 name: Hourly Market Zone Scanner
 on:
   schedule:
-    - cron: '0 * * * *' # Yeh har ghante automatic run hoga
-  workflow_dispatch: # Isse aap jab chahein manually bhi run kar sakte hain
+    - cron: '0 * * * *' 
+  workflow_dispatch: 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write  # Ye permission bahut zaroori hai!
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
@@ -21,3 +21,11 @@ jobs:
     - name: Run Scanner Pipeline
       run: |
         python pipeline.py
+    # --- YAHAN SE ADD KARO ---
+    - name: Commit and Push changes
+      run: |
+        git config --global user.name 'github-actions'
+        git config --global user.email 'github-actions@github.com'
+        git add zones_db.csv
+        git commit -m "Auto-update database" || exit 0
+        git push

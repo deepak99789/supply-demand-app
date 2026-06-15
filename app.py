@@ -132,7 +132,7 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
     df['body_ratio'] = (df['body_size'] / df['candle_size'].replace(0, 0.0001)) * 100
 
     for i in range(5, len(df) - 3):
-        for num_base in [1, 2, 3]:
+        for num_base in [1]:
             legin_idx = i - 1
             base_indices = list(range(i, i + num_base))
             legout_idx = i + num_base

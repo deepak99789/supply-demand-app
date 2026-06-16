@@ -17,7 +17,7 @@ jobs:
         python-version: '3.9'
     - name: Install Dependencies
       run: |
-        pip install pandas yfinance
+        pip install pandas yfinance requests
     - name: Run Scanner Pipeline
       run: |
         python pipeline.py

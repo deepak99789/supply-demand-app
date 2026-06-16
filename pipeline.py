@@ -123,7 +123,7 @@ def find_latest_zone(df, symbol_name, tf_name, category):
             return {
                 "Symbol": symbol_name, "Timeframe": tf_name, "Pattern": pattern, "Type": z_type,
                 "Proximal": round(proximal, 4), "Distal": round(distal, 4), "Target": round(target_price, 4),
-                "Status": "FRESH", "Formed_At": df.index[i].strftime('%Y-%m-%d %H:%M'), "Triggered": "NO", "Category": category
+                "Status": "FRESH", "Formed At": df.index[i].strftime('%Y-%m-%d %H:%M'), "Triggered": "NO", "Category": category
             }
     return None
 

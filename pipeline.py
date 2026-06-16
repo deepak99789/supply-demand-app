@@ -41,8 +41,7 @@ ASSETS_MASTER = {
             "EURGBP=X", "EURJPY=X", "EURAUD=X", "EURCAD=X", "EURCHF=X", "EURNZD=X",
             "GBPJPY=X", "GBPAUD=X", "GBPCAD=X", "GBPCHF=X", "GBPNZD=X",
             "AUDJPY=X", "AUDCAD=X", "AUDCHF=X", "AUDNZD=X",
-            "CADJPY=X", "CADCHF=X", "NZDJPY=X", "NZDCAD=X", "NZDCHF=X", "CHFJPY=X",
-            "USDSGD=X", "USDHKD=X", "USDMXN=X", "USDSEK=X", "USDTRY=X", "EURTRY=X", "GBPSEK=X"
+            "CADJPY=X", "CADCHF=X", "NZDJPY=X", "NZDCAD=X", "NZDCHF=X", "CHFJPY=X", 
         ],
     "Commodities": [
             "GC=F", "SI=F", "PL=F", "PA=F", "CL=F", "BZ=F", "NG=F", "HG=F", "RB=F", "HO=F", "ZC=F", "ZS=F", "ZW=F"

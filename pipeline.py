@@ -182,7 +182,9 @@ def start_automatic_pipeline():
                     new_zone = find_latest_zone(processed_feed, symbol, tf_label, category)
                     
                     if new_zone:
-                        duplicate = db_df[(db_df["Symbol"] == symbol) & (db_df["Formed At"] == new_zone["Formed At"]) & (db_df["Timeframe"] == tf_label)]
+                        duplicate = db_df[(db_df["Symbol"] == symbol) & 
+                  (db_df["Formed At"].astype(str) == str(new_zone["Formed At"])) & 
+                  (db_df["Timeframe"] == tf_label)]
                         if duplicate.empty:
                             db_df = pd.concat([db_df, pd.DataFrame([new_zone])], ignore_index=True)
                             emoji = "🟢" if new_zone['Type'] == "Demand" else "🔴"

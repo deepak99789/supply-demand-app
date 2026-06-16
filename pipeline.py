@@ -170,6 +170,7 @@ def start_automatic_pipeline():
             except Exception: continue
 
     # PHASE 2: SCAN FOR NEW FRESH ZONES
+    # PHASE 2: SCAN FOR NEW FRESH ZONES
     for category, symbols in ASSETS_MASTER.items():
         for symbol in symbols:
             for tf_label, config in TIMEFRAMES_MASTER.items():
@@ -184,20 +185,18 @@ def start_automatic_pipeline():
                         if duplicate.empty:
                             db_df = pd.concat([db_df, pd.DataFrame([new_zone])], ignore_index=True)
                             emoji = "🟢" if new_zone['Type'] == "Demand" else "🔴"
-                             alert_msg = (
-                    f"{main_emoji} *MANUAL SCANNER UPDATE* {main_emoji}\n\n"
-                    f"▪️ *SYMBOL :* `{alert_row['Symbol']}`\n"
-                    f"▪️ *TIMEFRAME :* `{alert_row['Timeframe']}`\n"
-                    f"▪️ *PATTERN :* `{alert_row['Pattern']}`\n"
-                    f"▪️ *TYPE :* `{alert_row['Type'].upper()}`\n"
-                    f"▪️ *BASE COUNT :* `{alert_row['Base Count']}`\n"
-                    f"▪️ *LEGOUTILITY COUNT :* `{alert_row['Legout Count']}`\n"
-                    f"▪️ *STATUS :* `{display_status}`\n"
-                    f"▪️ *PROXIMAL LINE :* `{alert_row['Proximal']}`\n"
-                    f"▪️ *DISTAL LINE :* `{alert_row['Distal']}`\n"
-                    f"▪️ *TARGET (1:2) :* `{alert_row['Target (1:2)']}`\n"
-                    f"▪️ *DATE OF ZONE FORMED :* `{alert_row['Formed At']}`"
-                )
+                            
+                            alert_msg = (
+                                f"{emoji} *NEW ZONE DETECTED* {emoji}\n\n"
+                                f"▪️ *SYMBOL :* `{new_zone['Symbol']}`\n"
+                                f"▪️ *TIMEFRAME :* `{new_zone['Timeframe']}`\n"
+                                f"▪️ *PATTERN :* `{new_zone['Pattern']}`\n"
+                                f"▪️ *TYPE :* `{new_zone['Type'].upper()}`\n"
+                                f"▪️ *STATUS :* `{new_zone['Status']}`\n"
+                                f"▪️ *PROXIMAL :* `{new_zone['Proximal']}`\n"
+                                f"▪️ *DISTAL :* `{new_zone['Distal']}`\n"
+                                f"▪️ *TARGET :* `{new_zone['Target']}`"
+                            )
                             send_market_specific_alert(category, alert_msg)
                 except Exception: continue
 

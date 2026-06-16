@@ -172,6 +172,7 @@ def start_automatic_pipeline():
     # PHASE 2: SCAN FOR NEW FRESH ZONES
     for category, symbols in ASSETS_MASTER.items():
         for symbol in symbols:
+            time.sleep(2)
             for tf_label, config in TIMEFRAMES_MASTER.items():
                 try:
                     raw_feed = yf.Ticker(symbol).history(period=config["period"], interval=config["base_interval"])

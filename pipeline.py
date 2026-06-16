@@ -129,8 +129,11 @@ def find_latest_zone(df, symbol_name, tf_name, category):
 
 def start_automatic_pipeline():
     print("🚀 Running Custom Resampled Multi-Timeframe Alert Pipeline...")
-    if os.path.exists(DB_FILE): db_df = pd.read_csv(DB_FILE)
-    else: db_df = pd.DataFrame(columns=["Symbol", "Timeframe", "Pattern", "Type", "Proximal", "Distal", "Target", "Status", "Formed_At", "Triggered", "Category"])
+    if os.path.exists(DB_FILE): 
+        db_df = pd.read_csv(DB_FILE)
+    else: 
+        # Yahan 'Formed At' (space ke saath) use karein
+        db_df = pd.DataFrame(columns=["Symbol", "Timeframe", "Pattern", "Type", "Proximal", "Distal", "Target", "Status", "Formed At", "Base Count", "Legout Count"])
 
     # PHASE 1: TRACK ACTIVE POSITION EVENTS
     if not db_df.empty:

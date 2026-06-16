@@ -173,12 +173,12 @@ def start_automatic_pipeline():
             except Exception: continue
 
     # PHASE 2: SCAN FOR NEW FRESH ZONES
+   # PHASE 2: SCAN FOR NEW FRESH ZONES
     # PHASE 2: SCAN FOR NEW FRESH ZONES
-    
- for category, symbols in ASSETS_MASTER.items():
+    for category, symbols in ASSETS_MASTER.items():
         for symbol in symbols:
-            
-         for tf_label, config in TIMEFRAMES_MASTER.items():
+            time.sleep(0.5) 
+            for tf_label, config in TIMEFRAMES_MASTER.items():
                 try:
                     raw_feed = yf.Ticker(symbol).history(period=config["period"], interval=config["base_interval"])
                     if raw_feed.empty: continue
@@ -187,8 +187,9 @@ def start_automatic_pipeline():
                     
                     if new_zone:
                         duplicate = db_df[(db_df["Symbol"] == symbol) & 
-                  (db_df["Formed At"].astype(str) == str(new_zone["Formed At"])) & 
-                  (db_df["Timeframe"] == tf_label)]
+                                          (db_df["Formed At"].astype(str) == str(new_zone["Formed At"])) & 
+                                          (db_df["Timeframe"] == tf_label)]
+                        
                         if duplicate.empty:
                             db_df = pd.concat([db_df, pd.DataFrame([new_zone])], ignore_index=True)
                             emoji = "🟢" if new_zone['Type'] == "Demand" else "🔴"

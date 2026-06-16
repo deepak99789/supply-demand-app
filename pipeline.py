@@ -46,9 +46,9 @@ ASSETS_MASTER = {
     "Commodities": [
             "GC=F", "SI=F", "PL=F", "PA=F", "CL=F", "BZ=F", "NG=F", "HG=F", "RB=F", "HO=F", "ZC=F", "ZS=F", "ZW=F"
         ],
-    "Indian Stocks": ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "ICICIBANK.NS", "INFY.NS", "SBIN.NS"],
+    "Indian Stocks": ["RELIANCE.NS", "TCS.NS", "SBIN.NS"],
     "US Stocks": ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA"],
-    "Crypto": ["BTC-USD", "ETH-USD", "SOL-USD"]
+    "Crypto": ["BTC-USD"]
 }
 
 # 🛠️ ALL REQUESTED TIMEFRAMES MASTER CONFIGURATION

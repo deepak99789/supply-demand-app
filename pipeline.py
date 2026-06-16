@@ -129,19 +129,11 @@ def find_latest_zone(df, symbol_name, tf_name, category):
 
 def start_automatic_pipeline():
     print("🚀 Running Custom Resampled Multi-Timeframe Alert Pipeline...")
-    
-    # 1. Pehle Test Alert bhejo (Ye check karega ki bot alert bhej sakta hai ya nahi)
-    try:
-        send_market_specific_alert("Crypto", "📢 TEST ALERT: Bot is working correctly!")
-    except Exception as e:
-        print(f"Telegram Test Failed: {e}")
-
-    # 2. Phir Database Load karo
     if os.path.exists(DB_FILE): 
         db_df = pd.read_csv(DB_FILE)
     else: 
+        # Yahan 'Formed At' (space ke saath) use karein
         db_df = pd.DataFrame(columns=["Symbol", "Timeframe", "Pattern", "Type", "Proximal", "Distal", "Target", "Status", "Formed At", "Base Count", "Legout Count"])
-    
     # ... baki ka code yahan rahega ...
     # PHASE 1: TRACK ACTIVE POSITION EVENTS
     if not db_df.empty:

@@ -126,21 +126,22 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
     for i in range(1, len(df) - 1):
         legin, base, legout = df.iloc[i-1], df.iloc[i], df.iloc[i+1]
         
-        # 1. Legin condition (Same rakhi hai)
-        if (legin['body_size'] / legin['range'].replace(0, 0.0001)) < 0.65: continue
+        # 1. Legin: Body 40% se zyada honi chahiye (thoda relax kiya hai)
+        if (legin['body_size'] / legin['range'].replace(0, 0.0001)) < 0.40: 
+            continue
             
-        # 2. Base condition (OR operator ke saath)
-        # Ab agar body size CHHOTA ho OR range CHHOTI ho, toh accept hoga
-        if not (base['body_size'] <= (legin['body_size'] / 2) or 
-                base['range'] <= (legin['range'] / 2)): continue
+        # 2. Base: Body ya Range mein se koi bhi chhoti ho (OR condition)
+        if not (base['body_size'] <= (legin['body_size'] * 0.8) or 
+                base['range'] <= (legin['range'] * 0.8)): 
+            continue
             
-        # 3. Legout condition (OR operator ke saath)
-        # Ab agar body size BADA ho OR volume BADA ho OR range BADI ho, toh accept hoga
+        # 3. Legout: Sirf momentum (Body ya Range ka bada hona)
+        # Volume wali line hata di gayi hai
         if not (legout['body_size'] > legin['body_size'] or 
-                legout['Volume'] > legin['Volume'] or 
-                legout['range'] > legin['range']): continue
+                legout['range'] > legin['range']): 
+            continue
         
-        # --- Baaki logic same hai ---
+        # --- Pattern & Zone Logic ---
         is_legin_green = legin['Close'] > legin['Open']
         is_legout_green = legout['Close'] > legout['Open']
         
@@ -150,6 +151,8 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
         else: pattern = "DBD"
         
         is_base_green = base['Close'] > base['Open']
+        
+        # Proximal/Distal Logic (Aapki requirement ke hisaab se)
         if pattern in ["RBR", "DBR"]:
             proximal = base['Close'] if is_base_green else base['Open']
             distal = base['Low']

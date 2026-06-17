@@ -7,12 +7,16 @@ import time
 # -------------------------------------------------------------------
 # ⚙️ CONFIGURATION
 # -------------------------------------------------------------------
-TELEGRAM_TOKEN = "YOUR_TOKEN_HERE"
-CHANNEL_IDS = {"Indian Stocks": "YOUR_ID", "US Stocks": "YOUR_ID", "Forex": "YOUR_ID", "Commodities": "YOUR_ID", "Crypto": "YOUR_ID"}
+TELEGRAM_TOKEN = "8781917241:AAFfyCdiJRCx321U_kVp0pJAe1fhKYcS5BU"
+CHANNEL_IDS = {"Indian Stocks": "-1004441153450", "US Stocks": "-1004457256685", "Forex": "YOUR_ID", "Commodities": "-1004448848917", "Crypto": "-1004451326458"}
 DB_FILE = "zones_db.csv"
 
 ASSETS_MASTER = {
-    "Forex": ["EURUSD=X", "GBPUSD=X"],
+    "Forex": ["EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X", "USDCAD=X", "NZDUSD=X", "USDCHF=X",
+            "EURGBP=X", "EURJPY=X", "EURAUD=X", "EURCAD=X", "EURCHF=X", "EURNZD=X",
+            "GBPJPY=X", "GBPAUD=X", "GBPCAD=X", "GBPCHF=X", "GBPNZD=X",
+            "AUDJPY=X", "AUDCAD=X", "AUDCHF=X", "AUDNZD=X",
+            "CADJPY=X", "CADCHF=X", "NZDJPY=X", "NZDCAD=X", "NZDCHF=X", "CHFJPY=X", ],
     "Indian Stocks": ["RELIANCE.NS"],
     "US Stocks": ["AAPL"],
     "Crypto": ["BTC-USD"]

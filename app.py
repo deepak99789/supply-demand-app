@@ -117,87 +117,49 @@ def apply_resampling(df, tf_name):
 # S&D Logic Engine
 def scan_supply_demand_zones(df, symbol_name, tf_name):
     zones = []
-    if len(df) < 12: 
-        return zones
+    if len(df) < 5: return zones
+    
     df = df.copy()
-    df['candle_size'] = (df['High'] - df['Low']).abs()
+    df['range'] = (df['High'] - df['Low'])
     df['body_size'] = (df['Close'] - df['Open']).abs()
-    df['is_green'] = df['Close'] > df['Open']
-    df['body_ratio'] = (df['body_size'] / df['candle_size'].replace(0, 0.0001)) * 100
-
-    for i in range(5, len(df) - 3):
-        for num_base in [1]:
-            legin_idx = i - 1
-            base_indices = list(range(i, i + num_base))
-            legout_idx = i + num_base
+    
+    for i in range(1, len(df) - 1):
+        legin, base, legout = df.iloc[i-1], df.iloc[i], df.iloc[i+1]
+        
+        # Conditions
+        if (legin['body_size'] / legin['range'].replace(0, 0.0001)) < 0.65: continue
+        if not (base['body_size'] <= (legin['body_size'] / 2) and base['range'] <= (legin['range'] / 2)): continue
+        if not (legout['body_size'] > legin['body_size'] and legout['Volume'] > legin['Volume'] and legout['range'] > legin['range']): continue
+        
+        # Pattern identification
+        is_legin_green = legin['Close'] > legin['Open']
+        is_legout_green = legout['Close'] > legout['Open']
+        
+        if is_legin_green and is_legout_green: pattern = "RBR"
+        elif is_legin_green and not is_legout_green: pattern = "RBD"
+        elif not is_legin_green and is_legout_green: pattern = "DBR"
+        else: pattern = "DBD"
+        
+        # Naya Proximal/Distal Logic
+        is_base_green = base['Close'] > base['Open']
+        if pattern in ["RBR", "DBR"]:
+            proximal = base['Close'] if is_base_green else base['Open']
+            distal = base['Low']
+            z_type = "Demand"
+        else:
+            proximal = base['Open'] if is_base_green else base['Close']
+            distal = base['High']
+            z_type = "Supply"
             
-            if legout_idx >= len(df): 
-                continue
-            
-            legin, legout = df.iloc[legin_idx], df.iloc[legout_idx]
-            bases = df.iloc[base_indices]
-            
-            if legin['body_ratio'] < 70 or legout['body_ratio'] < 70: 
-                continue
-            if legout['body_size'] <= legin['body_size']: 
-                continue
-                
-            legout_count = 1
-            direction_green = legout['is_green']
-            for k in range(legout_idx + 1, len(df)):
-                if df.iloc[k]['is_green'] == direction_green and df.iloc[k]['body_ratio'] >= 50: 
-                    legout_count += 1
-                else: 
-                    break
-                    
-            legin_green, legout_green = legin['is_green'], legout['is_green']
-            pattern, z_type, proximal, distal = None, None, 0.0, 0.0
-            
-            if legin_green and legout_green: 
-                pattern, z_type = "RBR", "Demand"
-            elif legin_green and not legout_green: 
-                pattern, z_type = "RBD", "Supply"
-            elif not legin_green and legout_green: 
-                pattern, z_type = "DBR", "Demand"
-            elif not legin_green and not legout_green: 
-                pattern, z_type = "DBD", "Supply"
-                
-            if z_type == "Demand":
-                proximal, distal = bases['High'].max(), bases['Low'].min()
-                target_price = proximal + (abs(proximal - distal) * 2)
-            else:
-                proximal, distal = bases['Low'].min(), bases['High'].max()
-                target_price = proximal - (abs(proximal - distal) * 2)
-                
-            status = "FRESH"
-            entered_zone = False
-            for j in range(legout_idx + 1, len(df)):
-                cl, ch = df.iloc[j]['Low'], df.iloc[j]['High']
-                if z_type == "Demand":
-                    if cl <= proximal: 
-                        entered_zone = True
-                    if entered_zone:
-                        if cl < distal: 
-                            status = "SL HIT"; break
-                        elif ch >= target_price: 
-                            status = "TARGET"; break
-                else:
-                    if ch >= proximal: 
-                        entered_zone = True
-                    if entered_zone:
-                        if ch > distal: 
-                            status = "SL HIT"; break
-                        elif cl <= target_price: 
-                            status = "TARGET"; break
-                            
-            zones.append({
-                "Symbol": symbol_name, "Timeframe": tf_name, "Pattern": pattern, "Type": z_type,
-                "Proximal": round(proximal, 4), "Distal": round(distal, 4), "Target (1:2)": round(target_price, 4),
-                "Status": status, "Base Count": num_base, "Legout Count": legout_count,
-                "Formed At": df.index[i].strftime('%Y-%m-%d %H:%M')
-            })
+        target_price = proximal + (abs(proximal - distal) * 2) if z_type == "Demand" else proximal - (abs(proximal - distal) * 2)
+        
+        zones.append({
+            "Symbol": symbol_name, "Timeframe": tf_name, "Pattern": pattern, "Type": z_type,
+            "Proximal": round(proximal, 4), "Distal": round(distal, 4), "Target (1:2)": round(target_price, 4),
+            "Status": "FRESH", "Formed At": df.index[i].strftime('%Y-%m-%d %H:%M')
+        })
+        
     return zones
-
 # -------------------------------------------------------------------
 # CONTROL PANEL INTERFACE
 # -------------------------------------------------------------------

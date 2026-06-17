@@ -280,7 +280,7 @@ if run_scan_btn:
                     f"▪️ *PROXIMAL LINE :* `{alert_row['Proximal']}`\n"
                     f"▪️ *DISTAL LINE :* `{alert_row['Distal']}`\n"
                     f"▪️ *TARGET (1:2) :* `{alert_row['Target (1:2)']}`\n"
-                    f"▪️ *DATE OF ZONE FORMED :* `{alert_row['Formed At']}`"
+                    f"▪️ *DATE OF BASE ZONE FORMED :* `{alert_row['Formed At']}`"
                 )
                 send_market_specific_alert(market_cat, alert_msg)
             

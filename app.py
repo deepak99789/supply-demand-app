@@ -95,13 +95,7 @@ TIMEFRAMES_MASTER = {
     "125 Min": {"base_interval": "5m", "period": "5d", "resample_rule": "125min"},
     "1 Hour": {"base_interval": "1h", "period": "360d"},
     "2 Hour": {"base_interval": "1h", "period": "360d", "resample_rule": "2h"},
-    "4 Hour": {"base_interval": "1h", "period": "360d", "resample_rule": "4h"},
-    "5 Hour": {"base_interval": "1h", "period": "360d", "resample_rule": "5h"},
-    "6 Hour": {"base_interval": "1h", "period": "360d", "resample_rule": "6h"},
-    "8 Hour": {"base_interval": "1h", "period": "360d", "resample_rule": "8h"},
-    "10 Hour": {"base_interval": "1h", "period": "360d", "resample_rule": "10h"},
-    "12 Hour": {"base_interval": "1h", "period": "360d", "resample_rule": "12h"},
-    "16 Hour": {"base_interval": "1h", "period": "360d", "resample_rule": "16h"},
+    "4 Hour": {"base_interval": "1h", "period": "360d", "resample_rule": "4h"},    
     "Daily": {"base_interval": "1d", "period": "5y"},
     "Weekly": {"base_interval": "1wk", "period": "max"}
 }

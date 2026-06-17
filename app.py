@@ -126,12 +126,21 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
     for i in range(1, len(df) - 1):
         legin, base, legout = df.iloc[i-1], df.iloc[i], df.iloc[i+1]
         
-        # Conditions
+        # 1. Legin condition (Same rakhi hai)
         if (legin['body_size'] / legin['range'].replace(0, 0.0001)) < 0.65: continue
-        if not (base['body_size'] <= (legin['body_size'] / 2) and base['range'] <= (legin['range'] / 2)): continue
-        if not (legout['body_size'] > legin['body_size'] and legout['Volume'] > legin['Volume'] and legout['range'] > legin['range']): continue
+            
+        # 2. Base condition (OR operator ke saath)
+        # Ab agar body size CHHOTA ho OR range CHHOTI ho, toh accept hoga
+        if not (base['body_size'] <= (legin['body_size'] / 2) or 
+                base['range'] <= (legin['range'] / 2)): continue
+            
+        # 3. Legout condition (OR operator ke saath)
+        # Ab agar body size BADA ho OR volume BADA ho OR range BADI ho, toh accept hoga
+        if not (legout['body_size'] > legin['body_size'] or 
+                legout['Volume'] > legin['Volume'] or 
+                legout['range'] > legin['range']): continue
         
-        # Pattern identification
+        # --- Baaki logic same hai ---
         is_legin_green = legin['Close'] > legin['Open']
         is_legout_green = legout['Close'] > legout['Open']
         
@@ -140,7 +149,6 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
         elif not is_legin_green and is_legout_green: pattern = "DBR"
         else: pattern = "DBD"
         
-        # Naya Proximal/Distal Logic
         is_base_green = base['Close'] > base['Open']
         if pattern in ["RBR", "DBR"]:
             proximal = base['Close'] if is_base_green else base['Open']

@@ -121,7 +121,13 @@ def apply_resampling(df, tf_name):
     return df
 
 # S&D Logic Engine
-def scan_supply_demand_zones(df, symbol_name, tf_name):
+def scan_supply_demand_zones(
+    df,
+    symbol_name,
+    tf_name,
+    selected_base_counts,
+    selected_legout_counts
+):
     zones = []
     if len(df) < 12: 
         return zones
@@ -132,7 +138,7 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
     df['body_ratio'] = (df['body_size'] / df['candle_size'].replace(0, 0.0001)) * 100
 
     for i in range(5, len(df) - 3):
-        for num_base in [1]:
+        for num_base in selected_base_counts:
             legin_idx = i - 1
             base_indices = list(range(i, i + num_base))
             legout_idx = i + num_base
@@ -149,12 +155,42 @@ def scan_supply_demand_zones(df, symbol_name, tf_name):
                 continue
                 
             legout_count = 1
-            direction_green = legout['is_green']
-            for k in range(legout_idx + 1, len(df)):
-                if df.iloc[k]['is_green'] == direction_green and df.iloc[k]['body_ratio'] >= 50: 
-                    legout_count += 1
-                else: 
-                    break
+direction_green = legout['is_green']
+
+for k in range(legout_idx + 1, len(df)):
+    if (
+        df.iloc[k]['is_green'] == direction_green
+        and df.iloc[k]['body_ratio'] >= 50
+    ):
+        legout_count += 1
+    else:
+        break
+
+# --------------------------------------------------
+# LEGOUT FILTER
+# --------------------------------------------------
+
+legout_valid = False
+
+for req_legout in selected_legout_counts:
+
+    if req_legout == "More Than 3":
+        if legout_count > 3:
+            legout_valid = True
+
+    elif legout_count >= int(req_legout):
+        legout_valid = True
+
+if not legout_valid:
+    continue
+
+legin_green = legin['is_green']
+legout_green = legout['is_green']
+
+pattern = None
+z_type = None
+proximal = 0.0
+distal = 0.0
                     
             legin_green, legout_green = legin['is_green'], legout['is_green']
             pattern, z_type, proximal, distal = None, None, 0.0, 0.0
@@ -220,7 +256,27 @@ with row2_col1:
     selected_tf_labels = st.multiselect("3. Select Timeframes", list(TIMEFRAMES_MASTER.keys()), default=["1 Hour"])
 with row2_col2:
     zone_filter_mode = st.radio("4. Target Zone Integrity Condition", ["FRESH", "SL HIT", "TARGET", "ALL"], horizontal=True)
+row3_col1, row3_col2 = st.columns(2)
 
+with row3_col1:
+    selected_base_counts = st.multiselect(
+        "5. Base Candle Count",
+        [1, 2, 3],
+        default=[1, 2, 3]
+    )
+
+with row3_col2:
+    selected_legout_counts = st.multiselect(
+        "6. Legout Count",
+        [1, 2, 3, "More Than 3"],
+        default=[1, 2, 3, "More Than 3"]
+    )
+
+if not selected_base_counts:
+    selected_base_counts = [1, 2, 3]
+
+if not selected_legout_counts:
+    selected_legout_counts = [1, 2, 3, "More Than 3"]
 send_alerts = st.checkbox("📢 Send Fresh Manual Scan Zones to Segregated Telegram Channels", value=True)
 run_scan_btn = st.button("🚀 START STRUCTURAL MATRIX SCAN", use_container_width=True)
 st.markdown("---")
@@ -245,7 +301,15 @@ if run_scan_btn:
                     if raw_feed.empty: 
                         continue
                     processed_feed = apply_resampling(raw_feed, tf_label)
-                    all_detected_zones.extend(scan_supply_demand_zones(processed_feed, symbol, tf_label))
+                    all_detected_zones.extend(
+    scan_supply_demand_zones(
+        processed_feed,
+        symbol,
+        tf_label,
+        selected_base_counts,
+        selected_legout_counts
+    )
+)
                 except Exception:
                     continue
 

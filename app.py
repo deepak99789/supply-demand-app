@@ -149,12 +149,13 @@ def scan_supply_demand_zones(
             legin, legout = df.iloc[legin_idx], df.iloc[legout_idx]
             bases = df.iloc[base_indices]
             
-            if legin['body_ratio'] < 70 or legout['body_ratio'] < 70: 
+                        if legin['body_ratio'] < 70 or legout['body_ratio'] < 70:
                 continue
-            if legout['body_size'] <= legin['body_size']: 
+
+            if legout['body_size'] <= legin['body_size']:
                 continue
-                
-                        legout_count = 1
+
+            legout_count = 1
             direction_green = legout['is_green']
 
             for k in range(legout_idx + 1, len(df)):

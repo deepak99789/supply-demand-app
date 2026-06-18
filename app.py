@@ -121,16 +121,126 @@ def apply_resampling(df, tf_name):
     return df
 
 # S&D Logic Engine
-def scan_supply_demand_zones(df, symbol_name, tf_name, selected_base_counts, selected_legout_counts, profile="Best"):
-    # ... (profiles dictionary) ...
-    
-    # DEBUG PRINT: Ye batayega ki data kitna hai aur body size kya hai
-    if len(df) > 0:
-        print(f"DEBUG: Symbol {symbol_name} | Rows: {len(df)} | Last Body: {df['body_size'].iloc[-1]:.2f}")
-    
-    # ... (loop starts) ...
+def scan_supply_demand_zones(
+    df,
+    symbol_name,
+    tf_name,
+    selected_base_counts=[1,2,3],
+    selected_legout_counts=[1,2,3,"More Than 3"],
+    profile="Good"
+):
 
-# -------------------------------------------------------------------
+    zones = []
+
+    df = df.copy()
+
+    df["Body"] = (df["Close"] - df["Open"]).abs()
+
+    n = len(df)
+
+    for i in range(5, n-5):
+
+        # -------------------------
+        # Base Candle Count (1-3)
+        # -------------------------
+        for base_count in selected_base_counts:
+
+            base_start = i
+            base_end = i + base_count - 1
+
+            if base_end >= n-3:
+                continue
+
+            base = df.iloc[base_start:base_end+1]
+
+            X = base["Body"].mean()
+
+            if X == 0:
+                continue
+
+            # -------------------------
+            # Leg In
+            # -------------------------
+            legin = df.iloc[base_start-1]
+
+            legin_body = abs(legin.Close - legin.Open)
+
+            if legin_body < (2 * X):
+                continue
+
+            # -------------------------
+            # Leg Out
+            # -------------------------
+            legout = df.iloc[base_end+1]
+
+            legout_body = abs(legout.Close - legout.Open)
+
+            if legout_body < (4 * X):
+                continue
+
+            # -------------------------
+            # Pattern
+            # -------------------------
+            if legin.Close > legin.Open and legout.Close > legout.Open:
+                pattern = "RBR"
+                zone_type = "Demand"
+
+            elif legin.Close < legin.Open and legout.Close > legout.Open:
+                pattern = "DBR"
+                zone_type = "Demand"
+
+            elif legin.Close > legin.Open and legout.Close < legout.Open:
+                pattern = "RBD"
+                zone_type = "Supply"
+
+            elif legin.Close < legin.Open and legout.Close < legout.Open:
+                pattern = "DBD"
+                zone_type = "Supply"
+
+            else:
+                continue
+
+            # -------------------------
+            # Zone
+            # -------------------------
+            proximal = base["High"].max() if zone_type=="Supply" else base["Low"].min()
+
+            distal = base["Low"].min() if zone_type=="Demand" else base["High"].max()
+
+            risk = abs(proximal - distal)
+
+            if zone_type=="Demand":
+                target = proximal + risk*2
+            else:
+                target = proximal - risk*2
+
+            zones.append({
+
+                "Symbol": symbol_name,
+
+                "Timeframe": tf_name,
+
+                "Pattern": pattern,
+
+                "Type": zone_type,
+
+                "Base Count": base_count,
+
+                "Legout Count": 1,
+
+                "Status": "FRESH",
+
+                "Proximal": round(proximal,5),
+
+                "Distal": round(distal,5),
+
+                "Target (1:2)": round(target,5),
+
+                "Formed At": base.index[-1]
+
+            })
+
+    return zones
 # -------------------------------------------------------------------
 # CONTROL PANEL INTERFACE (MODIFIED)
 # -------------------------------------------------------------------

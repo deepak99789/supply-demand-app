@@ -154,40 +154,36 @@ def scan_supply_demand_zones(
             if legout['body_size'] <= legin['body_size']: 
                 continue
                 
-            legout_count = 1
-direction_green = legout['is_green']
+                        legout_count = 1
+            direction_green = legout['is_green']
 
-for k in range(legout_idx + 1, len(df)):
-    if (
-        df.iloc[k]['is_green'] == direction_green
-        and df.iloc[k]['body_ratio'] >= 50
-    ):
-        legout_count += 1
-    else:
-        break
+            for k in range(legout_idx + 1, len(df)):
+                if (
+                    df.iloc[k]['is_green'] == direction_green
+                    and df.iloc[k]['body_ratio'] >= 50
+                ):
+                    legout_count += 1
+                else:
+                    break
 
-# --------------------------------------------------
-# LEGOUT FILTER
-# --------------------------------------------------
+            legout_valid = False
 
-legout_valid = False
+            for req_legout in selected_legout_counts:
 
-for req_legout in selected_legout_counts:
+                if req_legout == "More Than 3":
+                    if legout_count > 3:
+                        legout_valid = True
 
-    if req_legout == "More Than 3":
-        if legout_count > 3:
-            legout_valid = True
+                elif legout_count >= int(req_legout):
+                    legout_valid = True
 
-    elif legout_count >= int(req_legout):
-        legout_valid = True
+            if not legout_valid:
+                continue
 
-if not legout_valid:
-    continue
+            legin_green = legin['is_green']
+            legout_green = legout['is_green']
 
-legin_green = legin['is_green']
-legout_green = legout['is_green']
-
-pattern = None
+            pattern = None
 z_type = None
 proximal = 0.0
 distal = 0.0

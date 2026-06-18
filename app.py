@@ -121,7 +121,12 @@ def apply_resampling(df, tf_name):
     return df
 
 # S&D Logic Engine
-def scan_supply_demand_zones(df, symbol_name, tf_name, selected_base_counts, selected_legout_counts, profile="Best"):
+ef scan_supply_demand_zones(df, symbol_name, tf_name, selected_base_counts, selected_legout_counts, profile="Best"):
+    # ... (profiles dictionary) ...
+    
+    # DEBUG PRINT: Ye batayega ki data kitna hai aur body size kya hai
+    if len(df) > 0:
+        print(f"DEBUG: Symbol {symbol_name} | Rows: {len(df)} | Last Body: {df['body_size'].iloc[-1]:.2f}")
     # 📋 Profile Definitions: Ratios based on your requirement (X = Base Size)
     profiles = {
         "Good":   {"legin_mult": 2.0, "legout_mult": 4.0, "gap_check": False},

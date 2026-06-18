@@ -137,19 +137,19 @@ def scan_supply_demand_zones(
     df['is_green'] = df['Close'] > df['Open']
     df['body_ratio'] = (df['body_size'] / df['candle_size'].replace(0, 0.0001)) * 100
 
-    for i in range(5, len(df) - 3):
+        for i in range(5, len(df) - 3):
         for num_base in selected_base_counts:
             legin_idx = i - 1
             base_indices = list(range(i, i + num_base))
             legout_idx = i + num_base
-            
-            if legout_idx >= len(df): 
+
+            if legout_idx >= len(df):
                 continue
-            
+
             legin, legout = df.iloc[legin_idx], df.iloc[legout_idx]
             bases = df.iloc[base_indices]
-            
-                        if legin['body_ratio'] < 70 or legout['body_ratio'] < 70:
+
+            if legin['body_ratio'] < 70 or legout['body_ratio'] < 70:
                 continue
 
             if legout['body_size'] <= legin['body_size']:

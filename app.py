@@ -184,13 +184,8 @@ def scan_supply_demand_zones(
             legin_green = legin['is_green']
             legout_green = legout['is_green']
 
-                        legin_green = legin['is_green']
-            legout_green = legout['is_green']
-
-            pattern = None
-            z_type = None
-            proximal = 0.0
-            distal = 0.0
+            pattern, z_type = None, None
+            proximal, distal = 0.0, 0.0
             
             if legin_green and legout_green: 
                 pattern, z_type = "RBR", "Demand"

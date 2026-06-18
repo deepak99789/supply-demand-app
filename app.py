@@ -127,54 +127,8 @@ def scan_supply_demand_zones(df, symbol_name, tf_name, selected_base_counts, sel
     # DEBUG PRINT: Ye batayega ki data kitna hai aur body size kya hai
     if len(df) > 0:
         print(f"DEBUG: Symbol {symbol_name} | Rows: {len(df)} | Last Body: {df['body_size'].iloc[-1]:.2f}")
-    # 📋 Profile Definitions: Ratios based on your requirement (X = Base Size)
-    profiles = {
-        "Good":   {"legin_mult": 2.0, "legout_mult": 4.0, "gap_check": False},
-        "Strong": {"legin_mult": 2.0, "legout_mult": 3.0, "gap_check": False},
-        "Best":   {"legin_mult": 2.0, "legout_mult": 3.0, "gap_check": True}
-    }
     
-    p = profiles.get(profile, profiles["Best"])
-    zones = []
-    
-    for i in range(5, len(df) - 3):
-        for num_base in selected_base_counts:
-            legin_idx = i - 1
-            base_indices = list(range(i, i + num_base))
-            legout_idx = i + num_base
-            if legout_idx >= len(df): continue
-
-            legin, legout = df.iloc[legin_idx], df.iloc[legout_idx]
-            bases = df.iloc[base_indices]
-            avg_base_size = bases['body_size'].mean()
-
-            # 1. Proportional Momentum Check (X = avg_base_size)
-            target_legin = avg_base_size * p["legin_mult"]
-            target_legout = avg_base_size * p["legout_mult"]
-
-            if legin['body_size'] < target_legin: continue
-            if legout['body_size'] < target_legout: continue
-
-            # 2. Gap / Non-Touch Constraint (Only for Best)
-            proximal, distal = bases['High'].max(), bases['Low'].min()
-            
-            # Demand Zone (Green Move)
-            if legin['Close'] > legin['Open'] and legout['Close'] > legout['Open']:
-                z_type = "Demand"
-                if p["gap_check"] and legout['Low'] <= distal: continue
-            
-            # Supply Zone (Red Move)
-            elif legin['Close'] < legin['Open'] and legout['Close'] < legout['Open']:
-                z_type = "Supply"
-                if p["gap_check"] and legout['High'] >= proximal: continue
-            else: continue
-            
-            zones.append({
-                "Symbol": symbol_name, "Timeframe": tf_name, "Pattern": "RBR/DBD", "Type": z_type,
-                "Proximal": round(proximal, 4), "Distal": round(distal, 4),
-                "Formed At": df.index[i].strftime('%Y-%m-%d %H:%M')
-            })
-    return zones
+    # ... (loop starts) ...
 
 # -------------------------------------------------------------------
 # -------------------------------------------------------------------

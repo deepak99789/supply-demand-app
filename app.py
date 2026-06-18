@@ -121,119 +121,59 @@ def apply_resampling(df, tf_name):
     return df
 
 # S&D Logic Engine
-def scan_supply_demand_zones(
-    df,
-    symbol_name,
-    tf_name,
-    selected_base_counts,
-    selected_legout_counts
-):
+def scan_supply_demand_zones(df, symbol_name, tf_name, selected_base_counts, selected_legout_counts, profile="Best"):
+    # 📋 Profile Definitions: Ratios based on your requirement (X = Base Size)
+    profiles = {
+        "Good":   {"legin_mult": 2.0, "legout_mult": 4.0, "gap_check": False},
+        "Strong": {"legin_mult": 2.0, "legout_mult": 3.0, "gap_check": False},
+        "Best":   {"legin_mult": 2.0, "legout_mult": 3.0, "gap_check": True}
+    }
+    
+    p = profiles.get(profile, profiles["Best"])
     zones = []
-    if len(df) < 12: 
-        return zones
-    df = df.copy()
-    df['candle_size'] = (df['High'] - df['Low']).abs()
-    df['body_size'] = (df['Close'] - df['Open']).abs()
-    df['is_green'] = df['Close'] > df['Open']
-    df['body_ratio'] = (df['body_size'] / df['candle_size'].replace(0, 0.0001)) * 100
-
+    
     for i in range(5, len(df) - 3):
         for num_base in selected_base_counts:
             legin_idx = i - 1
             base_indices = list(range(i, i + num_base))
             legout_idx = i + num_base
-
-            if legout_idx >= len(df):
-                continue
+            if legout_idx >= len(df): continue
 
             legin, legout = df.iloc[legin_idx], df.iloc[legout_idx]
             bases = df.iloc[base_indices]
+            avg_base_size = bases['body_size'].mean()
 
-            if legin['body_ratio'] < 70 or legout['body_ratio'] < 70:
-                continue
+            # 1. Proportional Momentum Check (X = avg_base_size)
+            target_legin = avg_base_size * p["legin_mult"]
+            target_legout = avg_base_size * p["legout_mult"]
 
-            if legout['body_size'] <= legin['body_size']:
-                continue
+            if legin['body_size'] < target_legin: continue
+            if legout['body_size'] < target_legout: continue
 
-            legout_count = 1
-            direction_green = legout['is_green']
-
-            for k in range(legout_idx + 1, len(df)):
-                if (
-                    df.iloc[k]['is_green'] == direction_green
-                    and df.iloc[k]['body_ratio'] >= 50
-                ):
-                    legout_count += 1
-                else:
-                    break
-
-            legout_valid = False
-
-            for req_legout in selected_legout_counts:
-
-                if req_legout == "More Than 3":
-                    if legout_count > 3:
-                        legout_valid = True
-
-                elif legout_count >= int(req_legout):
-                    legout_valid = True
-
-            if not legout_valid:
-                continue
-
-            legin_green = legin['is_green']
-            legout_green = legout['is_green']
-
-            pattern, z_type = None, None
-            proximal, distal = 0.0, 0.0
+            # 2. Gap / Non-Touch Constraint (Only for Best)
+            proximal, distal = bases['High'].max(), bases['Low'].min()
             
-            if legin_green and legout_green: 
-                pattern, z_type = "RBR", "Demand"
-            elif legin_green and not legout_green: 
-                pattern, z_type = "RBD", "Supply"
-            elif not legin_green and legout_green: 
-                pattern, z_type = "DBR", "Demand"
-            elif not legin_green and not legout_green: 
-                pattern, z_type = "DBD", "Supply"
-                
-            if z_type == "Demand":
-                proximal, distal = bases['High'].max(), bases['Low'].min()
-                target_price = proximal + (abs(proximal - distal) * 2)
-            else:
-                proximal, distal = bases['Low'].min(), bases['High'].max()
-                target_price = proximal - (abs(proximal - distal) * 2)
-                
-            status = "FRESH"
-            entered_zone = False
-            for j in range(legout_idx + 1, len(df)):
-                cl, ch = df.iloc[j]['Low'], df.iloc[j]['High']
-                if z_type == "Demand":
-                    if cl <= proximal: 
-                        entered_zone = True
-                    if entered_zone:
-                        if cl < distal: 
-                            status = "SL HIT"; break
-                        elif ch >= target_price: 
-                            status = "TARGET"; break
-                else:
-                    if ch >= proximal: 
-                        entered_zone = True
-                    if entered_zone:
-                        if ch > distal: 
-                            status = "SL HIT"; break
-                        elif cl <= target_price: 
-                            status = "TARGET"; break
-                            
+            # Demand Zone (Green Move)
+            if legin['Close'] > legin['Open'] and legout['Close'] > legout['Open']:
+                z_type = "Demand"
+                if p["gap_check"] and legout['Low'] <= distal: continue
+            
+            # Supply Zone (Red Move)
+            elif legin['Close'] < legin['Open'] and legout['Close'] < legout['Open']:
+                z_type = "Supply"
+                if p["gap_check"] and legout['High'] >= proximal: continue
+            else: continue
+            
             zones.append({
-                "Symbol": symbol_name, "Timeframe": tf_name, "Pattern": pattern, "Type": z_type,
-                "Proximal": round(proximal, 4), "Distal": round(distal, 4), "Target (1:2)": round(target_price, 4),
-                "Status": status, "Base Count": num_base, "Legout Count": legout_count,
+                "Symbol": symbol_name, "Timeframe": tf_name, "Pattern": "RBR/DBD", "Type": z_type,
+                "Proximal": round(proximal, 4), "Distal": round(distal, 4),
                 "Formed At": df.index[i].strftime('%Y-%m-%d %H:%M')
             })
     return zones
 
 # -------------------------------------------------------------------
-# CONTROL PANEL INTERFACE
+# -------------------------------------------------------------------
+# CONTROL PANEL INTERFACE (MODIFIED)
 # -------------------------------------------------------------------
 st.markdown("### 🎛️ Scanner Control Matrix")
 row1_col1, row1_col2 = st.columns(2)
@@ -248,27 +188,27 @@ with row2_col1:
     selected_tf_labels = st.multiselect("3. Select Timeframes", list(TIMEFRAMES_MASTER.keys()), default=["1 Hour"])
 with row2_col2:
     zone_filter_mode = st.radio("4. Target Zone Integrity Condition", ["FRESH", "SL HIT", "TARGET", "ALL"], horizontal=True)
-row3_col1, row3_col2 = st.columns(2)
+
+# Naya Add-on: Zone Quality Profile
+st.markdown("---")
+row3_col1, row3_col2, row3_col3 = st.columns(3)
 
 with row3_col1:
-    selected_base_counts = st.multiselect(
-        "5. Base Candle Count",
-        [1, 2, 3],
-        default=[1, 2, 3]
-    )
-
+    selected_base_counts = st.multiselect("5. Base Candle Count", [1, 2, 3], default=[1, 2, 3])
 with row3_col2:
-    selected_legout_counts = st.multiselect(
-        "6. Legout Count",
-        [1, 2, 3, "More Than 3"],
-        default=[1, 2, 3, "More Than 3"]
+    selected_legout_counts = st.multiselect("6. Legout Count", [1, 2, 3, "More Than 3"], default=[1, 2, 3, "More Than 3"])
+with row3_col3:
+    # 🎯 Naya Zone Quality Selector
+    selected_profile = st.selectbox(
+        "7. Zone Quality Profile", 
+        ["Good", "Strong", "Best"], 
+        index=2, # Default 'Best' set kiya hai
+        help="Best mode includes Gap/Non-touch constraints for clean institutional zones."
     )
 
-if not selected_base_counts:
-    selected_base_counts = [1, 2, 3]
+if not selected_base_counts: selected_base_counts = [1, 2, 3]
+if not selected_legout_counts: selected_legout_counts = [1, 2, 3, "More Than 3"]
 
-if not selected_legout_counts:
-    selected_legout_counts = [1, 2, 3, "More Than 3"]
 send_alerts = st.checkbox("📢 Send Fresh Manual Scan Zones to Segregated Telegram Channels", value=True)
 run_scan_btn = st.button("🚀 START STRUCTURAL MATRIX SCAN", use_container_width=True)
 st.markdown("---")
@@ -293,6 +233,19 @@ if run_scan_btn:
                     if raw_feed.empty: 
                         continue
                     processed_feed = apply_resampling(raw_feed, tf_label)
+                    # 🚀 Yahan profile parameter add kar diya hai:
+                    all_detected_zones.extend(
+                        scan_supply_demand_zones(
+                            processed_feed,
+                            symbol,
+                            tf_label,
+                            selected_base_counts,
+                            selected_legout_counts,
+                            profile=selected_profile  # <--- Naya Profile Parameter
+                        )
+                    )
+                except Exception:
+                    continue
                     all_detected_zones.extend(
     scan_supply_demand_zones(
         processed_feed,

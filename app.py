@@ -356,14 +356,77 @@ def scan_supply_demand_zones(
 
             target = proximal + (risk * 3)
 
+        base_count = 1 if base_idx == i - 1 else 2
+
+        if base_count not in selected_base_counts:
+            continue
+
+        legout_count = 1
+
+        for j in range(i + 1, min(i + 5, len(df))):
+
+            nxt = df.iloc[j]
+
+            if zone_type == "Demand":
+                if nxt.Close > nxt.Open:
+                    legout_count += 1
+                else:
+                    break
+            else:
+                if nxt.Close < nxt.Open:
+                    legout_count += 1
+                else:
+                    break
+
+        display_legout = (
+            "More Than 3"
+            if legout_count > 3
+            else legout_count
+        )
+
+        if display_legout not in selected_legout_counts:
+            continue
+
+        future = df.iloc[i + 1:]
+
+        status = "FRESH"
+
+        for _, candle in future.iterrows():
+
+            if zone_type == "Demand":
+
+                if candle.Low <= distal:
+                    status = "SL HIT"
+                    break
+
+                if candle.High >= target:
+                    status = "TARGET"
+                    break
+
+                if candle.Low <= proximal:
+                    status = "TESTED"
+
+            else:
+
+                if candle.High >= distal:
+                    status = "SL HIT"
+                    break
+
+                if candle.Low <= target:
+                    status = "TARGET"
+                    break
+
+                if candle.High >= proximal:
+                    status = "TESTED"
+
         zones.append({
             "Symbol": symbol_name,
             "Timeframe": tf_name,
             "Pattern": pattern,
             "Type": zone_type,
-            "Base Count": 1 if base_idx == i - 1 else 2,
-            "Legout Count": 1,
-            "Status": "FRESH",
+            "Base Count": base_count,
+            "Legout Count": legout_count,
+            "Status": status,
             "Proximal": round(proximal, 5),
             "Distal": round(distal, 5),
             "Target (1:3)": round(target, 5),
@@ -386,7 +449,7 @@ row2_col1, row2_col2 = st.columns(2)
 with row2_col1:
     selected_tf_labels = st.multiselect("3. Select Timeframes", list(TIMEFRAMES_MASTER.keys()), default=["1 Hour"])
 with row2_col2:
-    zone_filter_mode = st.radio("4. Target Zone Integrity Condition", ["FRESH", "SL HIT", "TARGET", "ALL"], horizontal=True)
+    zone_filter_mode = st.radio("4. Target Zone Integrity Condition", ["FRESH", "TESTED", "SL HIT", "TARGET", "ALL"], horizontal=True)
 
 # Naya Add-on: Zone Quality Profile
 st.markdown("---")

@@ -121,689 +121,243 @@ def apply_resampling(df, tf_name):
     return df
 
 # S&D Logic Engine
-import pandas as pd
-import numpy as np
-
-# =====================================================
-# PROFILE RULES
-# =====================================================
-
-PROFILE_RULES = {
-
-    "Good": {
-        "legin": 2.0,
-        "legout": 4.0,
-        "body_ratio": 0.60,
-        "min_score": 60
-    },
-
-    "Strong": {
-        "legin": 3.0,
-        "legout": 6.0,
-        "body_ratio": 0.70,
-        "min_score": 75
-    },
-
-    "Best": {
-        "legin": 4.0,
-        "legout": 8.0,
-        "body_ratio": 0.75,
-        "min_score": 90
-    }
-
-}
-
-
-# =====================================================
-# CANDLE FUNCTIONS
-# =====================================================
-
-def body(c):
-    return abs(c["Close"]-c["Open"])
-
-
-def rng(c):
-    return c["High"]-c["Low"]
-
-
-def bullish(c):
-    return c["Close"]>c["Open"]
-
-
-def bearish(c):
-    return c["Close"]<c["Open"]
-
-
-# =====================================================
-# BASE DETECTION
-# =====================================================
-
-def detect_base(df,start,base_count):
-
-    if start+base_count>=len(df):
-        return None
-
-    base=df.iloc[start:start+base_count]
-
-    bodies=(base["Close"]-base["Open"]).abs()
-
-    if len(bodies)==0:
-        return None
-
-    X=bodies.max()
-
-    if X==0:
-        return None
-
-    # Similar body size
-    if bodies.max()>bodies.min()*2.5:
-        return None
-
-    # Compact range
-    total_range=base["High"].max()-base["Low"].min()
-
-    if total_range>X*3:
-        return None
-
-    # Wick filter
-    for _,r in base.iterrows():
-
-        b=body(r)
-
-        rr=rng(r)
-
-        if rr==0:
-            return None
-
-        if b/rr<0.25:
-            return None
-
-    return{
-
-        "start":start,
-
-        "end":start+base_count-1,
-
-        "body":X,
-
-        "high":base["High"].max(),
-
-        "low":base["Low"].min(),
-
-        "base":base
-
-    }
-
-
-# =====================================================
-# LEG-IN
-# =====================================================
-
-def detect_legin(df,base,profile):
-
-    idx=base["start"]-1
-
-    if idx<0:
-        return None
-
-    candle=df.iloc[idx]
-
-    b=body(candle)
-
-    need=base["body"]*PROFILE_RULES[profile]["legin"]
-
-    if b<need:
-        return None
-
-    rr=rng(candle)
-
-    if rr==0:
-        return None
-
-    if b/rr<PROFILE_RULES[profile]["body_ratio"]:
-        return None
-
-    return{
-
-        "index":idx,
-
-        "body":b,
-
-        "direction":"Bullish" if bullish(candle) else "Bearish",
-
-        "candle":candle
-
-    }
-
-
-# =====================================================
-# LEG-OUT
-# =====================================================
-
-def detect_legout(df,base,profile,selected_legout_counts):
-
-    start=base["end"]+1
-
-    if start>=len(df):
-        return []
-
-    rule=PROFILE_RULES[profile]
-
-    counts=[]
-
-    for c in selected_legout_counts:
-
-        if c=="More Than 3":
-
-            counts.extend([4,5,6,7,8,9,10])
-
-        else:
-
-            counts.append(int(c))
-
-    counts=sorted(set(counts))
-
-    output=[]
-
-    for count in counts:
-
-        end=start+count
-
-        if end>len(df):
-            continue
-
-        leg=df.iloc[start:end]
-
-        if len(leg)!=count:
-            continue
-
-        first=leg.iloc[0]
-
-        direction="Bullish" if bullish(first) else "Bearish"
-
-        valid=True
-
-        previous=None
-
-        for _,row in leg.iterrows():
-
-            b=body(row)
-
-            rr=rng(row)
-
-            if rr==0:
-
-                valid=False
-
-                break
-
-            if b<base["body"]*rule["legout"]:
-
-                valid=False
-
-                break
-
-            if b/rr<rule["body_ratio"]:
-
-                valid=False
-
-                break
-
-            d="Bullish" if bullish(row) else "Bearish"
-
-            if d!=direction:
-
-                valid=False
-
-                break
-
-            if previous is not None:
-
-                if direction=="Bullish":
-
-                    if row.Close<=previous:
-
-                        valid=False
-
-                        break
-
-                else:
-
-                    if row.Close>=previous:
-
-                        valid=False
-
-                        break
-
-            previous=row.Close
-
-        if not valid:
-            continue
-
-        last=leg.iloc[-1]
-
-        buffer=base["body"]*0.20
-
-        if direction=="Bullish":
-
-            if last.Close<=base["high"]+buffer:
-                continue
-
-        else:
-
-            if last.Close>=base["low"]-buffer:
-                continue
-
-        output.append({
-
-            "count":count,
-
-            "direction":direction,
-
-            "last":last,
-
-            "candles":leg
-
-        })
-
-    return output
-
-# =====================================================
-# PATTERN CLASSIFICATION
-# =====================================================
-
-def classify_pattern(legin, legout):
-
-    li = legin["direction"]
-    lo = legout["direction"]
-
-    if li == "Bullish" and lo == "Bullish":
-        return "RBR", "Demand"
-
-    elif li == "Bearish" and lo == "Bullish":
-        return "DBR", "Demand"
-
-    elif li == "Bullish" and lo == "Bearish":
-        return "RBD", "Supply"
-
-    elif li == "Bearish" and lo == "Bearish":
-        return "DBD", "Supply"
-
-    return None, None
-
-
-# =====================================================
-# CREATE ZONE
-# =====================================================
-
-def create_zone(symbol,
-                timeframe,
-                profile,
-                pattern,
-                zone_type,
-                base,
-                legout,
-                formed_at):
-
-    base_high = float(base["high"])
-    base_low = float(base["low"])
-
-    if zone_type == "Demand":
-
-        proximal = base_high
-        distal = base_low
-        risk = proximal - distal
-        target = proximal + risk * 2
-
-    else:
-
-        proximal = base_low
-        distal = base_high
-        risk = distal - proximal
-        target = proximal - risk * 2
-
-    return {
-
-        "Symbol": symbol,
-
-        "Timeframe": timeframe,
-
-        "Profile": profile,
-
-        "Pattern": pattern,
-
-        "Type": zone_type,
-
-        "Base Count":
-            base["end"] - base["start"] + 1,
-
-        "Legout Count":
-            legout["count"],
-
-        "Status":
-            "FRESH",
-
-        "Proximal":
-            round(proximal, 5),
-
-        "Distal":
-            round(distal, 5),
-
-        "Target (1:2)":
-            round(target, 5),
-
-        "Risk":
-            round(risk, 5),
-
-        "Formed At":
-            formed_at
-
-    }
-
-
-# =====================================================
-# IMPULSE SCORE
-# =====================================================
-
-def impulse_score(base, legin, legout):
-
-    score = 0
-
-    # Leg-In
-
-    if legin["body"] >= base["body"] * 2:
-        score += 20
-
-    if legin["body"] >= base["body"] * 3:
-        score += 10
-
-    # Leg-Out
-
-    last = legout["last"]
-
-    body = abs(last.Close - last.Open)
-    rng = last.High - last.Low
-
-    if rng > 0:
-
-        ratio = body / rng
-
-        if ratio >= 0.60:
-            score += 20
-
-        if ratio >= 0.75:
-            score += 10
-
-    # Consecutive candles
-
-    if legout["count"] >= 2:
-        score += 15
-
-    if legout["count"] >= 3:
-        score += 10
-
-    # Breakout
-
-    if legout["direction"] == "Bullish":
-
-        distance = last.Close - base["high"]
-
-    else:
-
-        distance = base["low"] - last.Close
-
-    if distance > base["body"]:
-        score += 15
-
-    return min(score, 100)
-
-
-# =====================================================
-# BASE SCORE
-# =====================================================
-
-def base_score(base):
-
-    score = 100
-
-    b = (
-        base["base"]["Close"] -
-        base["base"]["Open"]
-    ).abs()
-
-    if b.max() > b.min() * 2:
-        score -= 25
-
-    rng = (
-        base["base"]["High"].max() -
-        base["base"]["Low"].min()
-    )
-
-    if rng > base["body"] * 3:
-        score -= 25
-
-    return max(score, 0)
-
-
-# =====================================================
-# STATUS CHECK
-# =====================================================
-
-def check_zone_status(df, zone, formed_index):
-
-    future = df.iloc[formed_index + 1:]
-
-    if len(future) == 0:
-        return "FRESH"
-
-    if zone["Type"] == "Demand":
-
-        for _, row in future.iterrows():
-
-            # SL Hit
-
-            if row.Low < zone["Distal"]:
-                return "SL HIT"
-
-            # Target Hit
-
-            if row.High >= zone["Target (1:2)"]:
-                return "TARGET HIT"
-
-            # Used
-
-            if row.Low <= zone["Proximal"]:
-                return "USED"
-
-        return "FRESH"
-
-    else:
-
-        for _, row in future.iterrows():
-
-            if row.High > zone["Distal"]:
-                return "SL HIT"
-
-            if row.Low <= zone["Target (1:2)"]:
-                return "TARGET HIT"
-
-            if row.High >= zone["Proximal"]:
-                return "USED"
-
-        return "FRESH"
-
-  # =====================================================
-# REMOVE DUPLICATE ZONES
-# =====================================================
-
-def remove_duplicate_zones(zones):
-
-    final = []
-
-    for zone in zones:
-
-        duplicate = False
-
-        for old in final:
-
-            if old["Symbol"] != zone["Symbol"]:
-                continue
-
-            if old["Timeframe"] != zone["Timeframe"]:
-                continue
-
-            if old["Type"] != zone["Type"]:
-                continue
-
-            if abs(old["Proximal"] - zone["Proximal"]) < 0.0001:
-
-                if zone["Strength"] > old["Strength"]:
-
-                    final.remove(old)
-                    final.append(zone)
-
-                duplicate = True
-                break
-
-        if not duplicate:
-            final.append(zone)
-
-    return final
-
-
-# =====================================================
-# REMOVE NESTED ZONES
-# =====================================================
-
-def remove_nested_zones(zones):
-
-    final = []
-
-    for zone in zones:
-
-        keep = True
-
-        for old in final:
-
-            if old["Type"] != zone["Type"]:
-                continue
-
-            if zone["Proximal"] >= old["Proximal"] and \
-               zone["Distal"] <= old["Distal"]:
-
-                if old["Strength"] >= zone["Strength"]:
-                    keep = False
-                    break
-
-        if keep:
-            final.append(zone)
-
-    return final
-
-
-# =====================================================
-# MAIN SCANNER
-# =====================================================
-
 def scan_supply_demand_zones(
     df,
     symbol_name,
     tf_name,
-    selected_base_counts=[1,2,3],
-    selected_legout_counts=[1,2,3,"More Than 3"],
+    selected_base_counts=[1, 2, 3],
+    selected_legout_counts=[1, 2, 3, "More Than 3"],
     profile="Good"
 ):
 
     zones = []
 
-    n = len(df)
+    if len(df) < 20:
+        return zones
 
-    for i in range(5, n - 15):
+    df = df.copy()
 
-        for base_count in selected_base_counts:
+    df = calculate_atr(df)
 
-            base = detect_base(df, i, base_count)
+    for i in range(3, len(df)):
 
-            if base is None:
-                continue
+        c = df.iloc[i]
+        p1 = df.iloc[i - 1]
+        p2 = df.iloc[i - 2]
+        p3 = df.iloc[i - 3]
 
-            legin = detect_legin(df, base, profile)
+        if pd.isna(c.ATR):
+            continue
 
-            if legin is None:
-                continue
+        tr_c = c.High - c.Low
+        tr_p1 = p1.High - p1.Low
+        tr_p2 = p2.High - p2.Low
+        tr_p3 = p3.High - p3.Low
 
-            legouts = detect_legout(
-                df,
-                base,
-                profile,
-                selected_legout_counts
+        is_c_green = c.Close > c.Open
+        is_c_red = c.Close < c.Open
+
+        is_p1_green = p1.Close > p1.Open
+        is_p1_red = p1.Close < p1.Open
+
+        is_p2_green = p2.Close > p2.Open
+        is_p2_red = p2.Close < p2.Open
+
+        is_p3_green = p3.Close > p3.Open
+        is_p3_red = p3.Close < p3.Open
+
+        l_in_norm = abs(p2.Close - p2.Open) >= tr_p2 * 0.6
+        l_out_norm = abs(c.Close - c.Open) >= tr_c * 0.6
+
+        l_in_ext = abs(p3.Close - p3.Open) >= tr_p3 * 0.6
+
+        l_out_ext = (
+            abs(p1.Close - p1.Open) >= tr_p1 * 0.6
+            and abs(c.Close - c.Open) >= tr_c * 0.6
+        )
+
+        pattern = None
+        zone_type = None
+        base_idx = None
+
+        # ---------------- RBD ----------------
+
+        rbd_std = (
+            is_p2_green and is_c_red
+            and l_in_norm and l_out_norm
+            and (tr_p1 <= tr_p2 * 0.6)
+            and (tr_p2 >= tr_p1 * 1.7)
+            and (
+                tr_c >= tr_p2 * 1.7
+                or (is_p1_red and (tr_p1 + tr_c >= tr_p2 * 1.7))
+            )
+        )
+
+        rbd_ext = (
+            is_p3_green and is_c_red
+            and l_in_ext and l_out_ext
+            and (tr_p2 <= tr_p3 * 0.6)
+            and (tr_p3 >= tr_p2 * 1.7)
+            and (
+                tr_p1 >= tr_p3 * 1.7
+                or (is_p1_red and (tr_p1 + tr_c >= tr_p3 * 1.7))
+            )
+        )
+
+        if rbd_std or rbd_ext:
+
+            tmp_idx = i - 1 if rbd_std else i - 2
+
+            if c.High <= df.iloc[tmp_idx].High:
+                pattern = "RBD"
+                zone_type = "Supply"
+                base_idx = tmp_idx
+
+        # ---------------- DBD ----------------
+
+        if pattern is None:
+
+            dbd_std = (
+                is_p2_red and is_c_red
+                and l_in_norm and l_out_norm
+                and (tr_p1 <= tr_p2 * 0.6)
+                and (tr_p2 >= tr_p1 * 1.7)
+                and (
+                    tr_c >= tr_p2 * 1.7
+                    or (is_p1_red and (tr_p1 + tr_c >= tr_p2 * 1.7))
+                )
             )
 
-            if len(legouts) == 0:
-                continue
-
-            for legout in legouts:
-
-                pattern, zone_type = classify_pattern(
-                    legin,
-                    legout
+            dbd_ext = (
+                is_p3_red and is_c_red
+                and l_in_ext and l_out_ext
+                and (tr_p2 <= tr_p3 * 0.6)
+                and (tr_p3 >= tr_p2 * 1.7)
+                and (
+                    tr_p1 >= tr_p3 * 1.7
+                    or (is_p1_red and (tr_p1 + tr_c >= tr_p3 * 1.7))
                 )
+            )
 
-                if pattern is None:
-                    continue
+            if dbd_std or dbd_ext:
 
-                zone = create_zone(
-                    symbol_name,
-                    tf_name,
-                    profile,
-                    pattern,
-                    zone_type,
-                    base,
-                    legout,
-                    df.index[base["end"]]
+                tmp_idx = i - 1 if dbd_std else i - 2
+
+                if c.High <= df.iloc[tmp_idx].High:
+                    pattern = "DBD"
+                    zone_type = "Supply"
+                    base_idx = tmp_idx
+
+        # ---------------- DBR ----------------
+
+        if pattern is None:
+
+            dbr_std = (
+                is_p2_red and is_c_green
+                and l_in_norm and l_out_norm
+                and (tr_p1 <= tr_p2 * 0.6)
+                and (tr_p2 >= tr_p1 * 1.7)
+                and (
+                    tr_c >= tr_p2 * 1.7
+                    or (is_p1_green and (tr_p1 + tr_c >= tr_p2 * 1.7))
                 )
+            )
 
-                impulse = impulse_score(
-                    base,
-                    legin,
-                    legout
+            dbr_ext = (
+                is_p3_red and is_c_green
+                and l_in_ext and l_out_ext
+                and (tr_p2 <= tr_p3 * 0.6)
+                and (tr_p3 >= tr_p2 * 1.7)
+                and (
+                    tr_p1 >= tr_p3 * 1.7
+                    or (is_p1_green and (tr_p1 + tr_c >= tr_p3 * 1.7))
                 )
+            )
 
-                base_quality = base_score(base)
+            if dbr_std or dbr_ext:
 
-                zone["Strength"] = int(
-                    impulse * 0.70 +
-                    base_quality * 0.30
+                tmp_idx = i - 1 if dbr_std else i - 2
+
+                if c.Low >= df.iloc[tmp_idx].Low:
+                    pattern = "DBR"
+                    zone_type = "Demand"
+                    base_idx = tmp_idx
+
+        # ---------------- RBR ----------------
+
+        if pattern is None:
+
+            rbr_std = (
+                is_p2_green and is_c_green
+                and l_in_norm and l_out_norm
+                and (tr_p1 <= tr_p2 * 0.6)
+                and (tr_p2 >= tr_p1 * 1.7)
+                and (
+                    tr_c >= tr_p2 * 1.7
+                    or (is_p1_green and (tr_p1 + tr_c >= tr_p2 * 1.7))
                 )
+            )
 
-                # Profile Quality Filter
-
-                min_score = PROFILE_RULES[profile]["min_score"]
-
-                if zone["Strength"] < min_score:
-                    continue
-
-                zone["Status"] = check_zone_status(
-                    df,
-                    zone,
-                    base["end"]
+            rbr_ext = (
+                is_p3_green and is_c_green
+                and l_in_ext and l_out_ext
+                and (tr_p2 <= tr_p3 * 0.6)
+                and (tr_p3 >= tr_p2 * 1.7)
+                and (
+                    tr_p1 >= tr_p3 * 1.7
+                    or (is_p1_green and (tr_p1 + tr_c >= tr_p3 * 1.7))
                 )
+            )
 
-                zones.append(zone)
+            if rbr_std or rbr_ext:
 
-    zones = remove_duplicate_zones(zones)
+                tmp_idx = i - 1 if rbr_std else i - 2
 
-    zones = remove_nested_zones(zones)
+                if c.Low >= df.iloc[tmp_idx].Low:
+                    pattern = "RBR"
+                    zone_type = "Demand"
+                    base_idx = tmp_idx
 
-    zones = sorted(
-        zones,
-        key=lambda x: (
-            x["Strength"],
-            x["Base Count"],
-            x["Legout Count"]
-        ),
-        reverse=True
-    )
+        if pattern is None:
+            continue
+
+        base = df.iloc[base_idx]
+
+        atr_buffer = c.ATR * 0.35
+
+        if zone_type == "Supply":
+
+            proximal = min(base.Open, base.Close)
+
+            distal = base.High + atr_buffer
+
+            risk = distal - proximal
+
+            target = proximal - (risk * 3)
+
+        else:
+
+            proximal = max(base.Open, base.Close)
+
+            distal = base.Low - atr_buffer
+
+            risk = proximal - distal
+
+            target = proximal + (risk * 3)
+
+        zones.append({
+            "Symbol": symbol_name,
+            "Timeframe": tf_name,
+            "Pattern": pattern,
+            "Type": zone_type,
+            "Base Count": 1 if base_idx == i - 1 else 2,
+            "Legout Count": 1,
+            "Status": "FRESH",
+            "Proximal": round(proximal, 5),
+            "Distal": round(distal, 5),
+            "Target (1:3)": round(target, 5),
+            "Formed At": df.index[i]
+        })
 
     return zones
 # -------------------------------------------------------------------

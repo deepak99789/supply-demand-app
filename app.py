@@ -4,6 +4,17 @@ import yfinance as yf
 import plotly.graph_objects as go
 import requests
 
+
+def calculate_atr(df, period=14):
+    high_low = df["High"] - df["Low"]
+    high_close = (df["High"] - df["Close"].shift()).abs()
+    low_close = (df["Low"] - df["Close"].shift()).abs()
+
+    tr = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
+    df["ATR"] = tr.rolling(period).mean()
+    return df
+
+
 # Full Screen Configuration
 st.set_page_config(layout="wide", page_title="Institutional Supply/Demand Matrix Scanner")
 
@@ -166,14 +177,14 @@ def scan_supply_demand_zones(
         is_p3_green = p3.Close > p3.Open
         is_p3_red = p3.Close < p3.Open
 
-        l_in_norm = abs(p2.Close - p2.Open) >= tr_p2 * 0.6
-        l_out_norm = abs(c.Close - c.Open) >= tr_c * 0.6
+        l_in_norm = abs(p2.Close - p2.Open) >= tr_p2 * 0.5
+        l_out_norm = abs(c.Close - c.Open) >= tr_c * 0.5
 
-        l_in_ext = abs(p3.Close - p3.Open) >= tr_p3 * 0.6
+        l_in_ext = abs(p3.Close - p3.Open) >= tr_p3 * 0.8
 
         l_out_ext = (
-            abs(p1.Close - p1.Open) >= tr_p1 * 0.6
-            and abs(c.Close - c.Open) >= tr_c * 0.6
+            abs(p1.Close - p1.Open) >= tr_p1 * 0.8
+            and abs(c.Close - c.Open) >= tr_c * 0.8
         )
 
         pattern = None
@@ -185,22 +196,22 @@ def scan_supply_demand_zones(
         rbd_std = (
             is_p2_green and is_c_red
             and l_in_norm and l_out_norm
-            and (tr_p1 <= tr_p2 * 0.6)
-            and (tr_p2 >= tr_p1 * 1.7)
+            and (tr_p1 <= tr_p2 * 0.8)
+            and (tr_p2 >= tr_p1 * 1.3)
             and (
-                tr_c >= tr_p2 * 1.7
-                or (is_p1_red and (tr_p1 + tr_c >= tr_p2 * 1.7))
+                tr_c >= tr_p2 * 1.3
+                or (is_p1_red and (tr_p1 + tr_c >= tr_p2 * 1.3))
             )
         )
 
         rbd_ext = (
             is_p3_green and is_c_red
             and l_in_ext and l_out_ext
-            and (tr_p2 <= tr_p3 * 0.6)
-            and (tr_p3 >= tr_p2 * 1.7)
+            and (tr_p2 <= tr_p3 * 0.8)
+            and (tr_p3 >= tr_p2 * 1.3)
             and (
-                tr_p1 >= tr_p3 * 1.7
-                or (is_p1_red and (tr_p1 + tr_c >= tr_p3 * 1.7))
+                tr_p1 >= tr_p3 * 1.3
+                or (is_p1_red and (tr_p1 + tr_c >= tr_p3 * 1.3))
             )
         )
 
@@ -220,22 +231,22 @@ def scan_supply_demand_zones(
             dbd_std = (
                 is_p2_red and is_c_red
                 and l_in_norm and l_out_norm
-                and (tr_p1 <= tr_p2 * 0.6)
-                and (tr_p2 >= tr_p1 * 1.7)
+                and (tr_p1 <= tr_p2 * 0.8)
+                and (tr_p2 >= tr_p1 * 1.3)
                 and (
-                    tr_c >= tr_p2 * 1.7
-                    or (is_p1_red and (tr_p1 + tr_c >= tr_p2 * 1.7))
+                    tr_c >= tr_p2 * 1.3
+                    or (is_p1_red and (tr_p1 + tr_c >= tr_p2 * 1.3))
                 )
             )
 
             dbd_ext = (
                 is_p3_red and is_c_red
                 and l_in_ext and l_out_ext
-                and (tr_p2 <= tr_p3 * 0.6)
-                and (tr_p3 >= tr_p2 * 1.7)
+                and (tr_p2 <= tr_p3 * 0.8)
+                and (tr_p3 >= tr_p2 * 1.3)
                 and (
-                    tr_p1 >= tr_p3 * 1.7
-                    or (is_p1_red and (tr_p1 + tr_c >= tr_p3 * 1.7))
+                    tr_p1 >= tr_p3 * 1.3
+                    or (is_p1_red and (tr_p1 + tr_c >= tr_p3 * 1.3))
                 )
             )
 
@@ -255,22 +266,22 @@ def scan_supply_demand_zones(
             dbr_std = (
                 is_p2_red and is_c_green
                 and l_in_norm and l_out_norm
-                and (tr_p1 <= tr_p2 * 0.6)
-                and (tr_p2 >= tr_p1 * 1.7)
+                and (tr_p1 <= tr_p2 * 0.8)
+                and (tr_p2 >= tr_p1 * 1.3)
                 and (
-                    tr_c >= tr_p2 * 1.7
-                    or (is_p1_green and (tr_p1 + tr_c >= tr_p2 * 1.7))
+                    tr_c >= tr_p2 * 1.3
+                    or (is_p1_green and (tr_p1 + tr_c >= tr_p2 * 1.3))
                 )
             )
 
             dbr_ext = (
                 is_p3_red and is_c_green
                 and l_in_ext and l_out_ext
-                and (tr_p2 <= tr_p3 * 0.6)
-                and (tr_p3 >= tr_p2 * 1.7)
+                and (tr_p2 <= tr_p3 * 0.8)
+                and (tr_p3 >= tr_p2 * 1.3)
                 and (
-                    tr_p1 >= tr_p3 * 1.7
-                    or (is_p1_green and (tr_p1 + tr_c >= tr_p3 * 1.7))
+                    tr_p1 >= tr_p3 * 1.3
+                    or (is_p1_green and (tr_p1 + tr_c >= tr_p3 * 1.3))
                 )
             )
 
@@ -290,22 +301,22 @@ def scan_supply_demand_zones(
             rbr_std = (
                 is_p2_green and is_c_green
                 and l_in_norm and l_out_norm
-                and (tr_p1 <= tr_p2 * 0.6)
-                and (tr_p2 >= tr_p1 * 1.7)
+                and (tr_p1 <= tr_p2 * 0.8)
+                and (tr_p2 >= tr_p1 * 1.3)
                 and (
-                    tr_c >= tr_p2 * 1.7
-                    or (is_p1_green and (tr_p1 + tr_c >= tr_p2 * 1.7))
+                    tr_c >= tr_p2 * 1.3
+                    or (is_p1_green and (tr_p1 + tr_c >= tr_p2 * 1.3))
                 )
             )
 
             rbr_ext = (
                 is_p3_green and is_c_green
                 and l_in_ext and l_out_ext
-                and (tr_p2 <= tr_p3 * 0.6)
-                and (tr_p3 >= tr_p2 * 1.7)
+                and (tr_p2 <= tr_p3 * 0.8)
+                and (tr_p3 >= tr_p2 * 1.3)
                 and (
-                    tr_p1 >= tr_p3 * 1.7
-                    or (is_p1_green and (tr_p1 + tr_c >= tr_p3 * 1.7))
+                    tr_p1 >= tr_p3 * 1.3
+                    or (is_p1_green and (tr_p1 + tr_c >= tr_p3 * 1.3))
                 )
             )
 
@@ -432,7 +443,8 @@ if run_scan_btn:
                             profile=selected_profile  # <--- Naya Profile Parameter
                         )
                     )
-                except Exception:
+                except Exception as e:
+                    st.error(f"{symbol} | {tf_label} | {str(e)}")
                     continue
                     all_detected_zones.extend(
     scan_supply_demand_zones(
@@ -443,7 +455,8 @@ if run_scan_btn:
         selected_legout_counts
     )
 )
-                except Exception:
+                except Exception as e:
+                    st.error(f"{symbol} | {tf_label} | {str(e)}")
                     continue
 
     if all_detected_zones:
@@ -482,7 +495,7 @@ if run_scan_btn:
                     f"▪️ *STATUS :* `{display_status}`\n"
                     f"▪️ *PROXIMAL LINE :* `{alert_row['Proximal']}`\n"
                     f"▪️ *DISTAL LINE :* `{alert_row['Distal']}`\n"
-                    f"▪️ *TARGET (1:2) :* `{alert_row['Target (1:2)']}`\n"
+                    f"▪️ *TARGET (1:2) :* `{alert_row['Target (1:3)']}`\n"
                     f"▪️ *DATE OF ZONE FORMED :* `{alert_row['Formed At']}`"
                 )
                 send_market_specific_alert(market_cat, alert_msg)
@@ -496,7 +509,7 @@ if run_scan_btn:
         m3.metric("🎯 Target Hits (1:2 RR)", total_target)
         m4.metric("🔴 Stop Loss (SL) Hits", total_sl_hit)
         
-        clean_columns = ["Symbol", "Timeframe", "Pattern", "Type", "Base Count", "Legout Count", "Status", "Proximal", "Distal", "Target (1:2)", "Formed At"]
+        clean_columns = ["Symbol", "Timeframe", "Pattern", "Type", "Base Count", "Legout Count", "Status", "Proximal", "Distal", "Target (1:3)", "Formed At"]
         master_df = master_df[clean_columns]
         
         st.subheader("📋 Core Structural Database Logs")
@@ -514,7 +527,7 @@ if run_scan_btn:
                         sc = "rgba(46, 204, 113, 0.15)" if row['Type'] == "Demand" else "rgba(231, 76, 60, 0.15)"
                         lc = "#2ecc71" if row['Type'] == "Demand" else "#e74c3c"
                         fig.add_shape(type="rect", x0=row['Formed At'], y0=row['Distal'], x1=chart_feed.index[-1], y1=row['Proximal'], fillcolor=sc, line=dict(color=lc, width=1))
-                        fig.add_shape(type="line", x0=row['Formed At'], y0=row['Target (1:2)'], x1=chart_feed.index[-1], y1=row['Target (1:2)'], line=dict(color="#3498db", width=2, dash="dash"))
+                        fig.add_shape(type="line", x0=row['Formed At'], y0=row['Target (1:3)'], x1=chart_feed.index[-1], y1=row['Target (1:3)'], line=dict(color="#3498db", width=2, dash="dash"))
                         fig.update_layout(template="plotly_dark", height=400, xaxis_rangeslider_visible=False)
                         st.plotly_chart(fig, use_container_width=True, key=f"ch_{idx}")
                 except Exception: 

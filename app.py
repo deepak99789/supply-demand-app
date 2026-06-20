@@ -387,7 +387,12 @@ def scan_supply_demand_zones(
         if display_legout not in selected_legout_counts:
             continue
 
-        future = df.iloc[i + 1:]
+        zone_age = len(df) - i
+
+        if zone_age > 20:
+            continue
+
+        future = df.iloc[i + 1:i + 20]
 
         status = "FRESH"
 
@@ -509,16 +514,7 @@ if run_scan_btn:
                 except Exception as e:
                     st.error(f"{symbol} | {tf_label} | {str(e)}")
                     continue
-                    all_detected_zones.extend(
-    scan_supply_demand_zones(
-        processed_feed,
-        symbol,
-        tf_label,
-        selected_base_counts,
-        selected_legout_counts
-    )
-)
-                except Exception as e:
+
                     st.error(f"{symbol} | {tf_label} | {str(e)}")
                     continue
 
@@ -558,7 +554,7 @@ if run_scan_btn:
                     f"▪️ *STATUS :* `{display_status}`\n"
                     f"▪️ *PROXIMAL LINE :* `{alert_row['Proximal']}`\n"
                     f"▪️ *DISTAL LINE :* `{alert_row['Distal']}`\n"
-                    f"▪️ *TARGET (1:2) :* `{alert_row['Target (1:3)']}`\n"
+                    f"▪️ *TARGET (1:3) :* `{alert_row['Target (1:3)']}`\n"
                     f"▪️ *DATE OF ZONE FORMED :* `{alert_row['Formed At']}`"
                 )
                 send_market_specific_alert(market_cat, alert_msg)
@@ -569,7 +565,7 @@ if run_scan_btn:
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("Scanned Assets", f"{len(target_symbols)} Pairs")
         m2.metric("🟢 Fresh Active Zones", total_fresh)
-        m3.metric("🎯 Target Hits (1:2 RR)", total_target)
+        m3.metric("🎯 Target Hits (1:3 RR)", total_target)
         m4.metric("🔴 Stop Loss (SL) Hits", total_sl_hit)
         
         clean_columns = ["Symbol", "Timeframe", "Pattern", "Type", "Base Count", "Legout Count", "Status", "Proximal", "Distal", "Target (1:3)", "Formed At"]

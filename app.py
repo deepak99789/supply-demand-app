@@ -177,14 +177,14 @@ def scan_supply_demand_zones(
         is_p3_green = p3.Close > p3.Open
         is_p3_red = p3.Close < p3.Open
 
-        l_in_norm = abs(p2.Close - p2.Open) >= tr_p2 * 0.5
-        l_out_norm = abs(c.Close - c.Open) >= tr_c * 0.5
+        l_in_norm = abs(p2.Close - p2.Open) >= tr_p2 * 0.6
+        l_out_norm = abs(c.Close - c.Open) >= tr_c * 0.6
 
-        l_in_ext = abs(p3.Close - p3.Open) >= tr_p3 * 0.8
+        l_in_ext = abs(p3.Close - p3.Open) >= tr_p3 * 0.6
 
         l_out_ext = (
-            abs(p1.Close - p1.Open) >= tr_p1 * 0.8
-            and abs(c.Close - c.Open) >= tr_c * 0.8
+            abs(p1.Close - p1.Open) >= tr_p1 * 0.6
+            and abs(c.Close - c.Open) >= tr_c * 0.6
         )
 
         pattern = None
@@ -196,22 +196,22 @@ def scan_supply_demand_zones(
         rbd_std = (
             is_p2_green and is_c_red
             and l_in_norm and l_out_norm
-            and (tr_p1 <= tr_p2 * 0.8)
-            and (tr_p2 >= tr_p1 * 1.3)
+            and (tr_p1 <= tr_p2 * 0.6)
+            and (tr_p2 >= tr_p1 * 1.7)
             and (
-                tr_c >= tr_p2 * 1.3
-                or (is_p1_red and (tr_p1 + tr_c >= tr_p2 * 1.3))
+                tr_c >= tr_p2 * 1.7
+                or (is_p1_red and (tr_p1 + tr_c >= tr_p2 * 1.7))
             )
         )
 
         rbd_ext = (
             is_p3_green and is_c_red
             and l_in_ext and l_out_ext
-            and (tr_p2 <= tr_p3 * 0.8)
-            and (tr_p3 >= tr_p2 * 1.3)
+            and (tr_p2 <= tr_p3 * 0.6)
+            and (tr_p3 >= tr_p2 * 1.7)
             and (
-                tr_p1 >= tr_p3 * 1.3
-                or (is_p1_red and (tr_p1 + tr_c >= tr_p3 * 1.3))
+                tr_p1 >= tr_p3 * 1.7
+                or (is_p1_red and (tr_p1 + tr_c >= tr_p3 * 1.7))
             )
         )
 
@@ -231,22 +231,22 @@ def scan_supply_demand_zones(
             dbd_std = (
                 is_p2_red and is_c_red
                 and l_in_norm and l_out_norm
-                and (tr_p1 <= tr_p2 * 0.8)
-                and (tr_p2 >= tr_p1 * 1.3)
+                and (tr_p1 <= tr_p2 * 0.6)
+                and (tr_p2 >= tr_p1 * 1.7)
                 and (
-                    tr_c >= tr_p2 * 1.3
-                    or (is_p1_red and (tr_p1 + tr_c >= tr_p2 * 1.3))
+                    tr_c >= tr_p2 * 1.7
+                    or (is_p1_red and (tr_p1 + tr_c >= tr_p2 * 1.7))
                 )
             )
 
             dbd_ext = (
                 is_p3_red and is_c_red
                 and l_in_ext and l_out_ext
-                and (tr_p2 <= tr_p3 * 0.8)
-                and (tr_p3 >= tr_p2 * 1.3)
+                and (tr_p2 <= tr_p3 * 0.6)
+                and (tr_p3 >= tr_p2 * 1.7)
                 and (
-                    tr_p1 >= tr_p3 * 1.3
-                    or (is_p1_red and (tr_p1 + tr_c >= tr_p3 * 1.3))
+                    tr_p1 >= tr_p3 * 1.7
+                    or (is_p1_red and (tr_p1 + tr_c >= tr_p3 * 1.7))
                 )
             )
 
@@ -266,22 +266,22 @@ def scan_supply_demand_zones(
             dbr_std = (
                 is_p2_red and is_c_green
                 and l_in_norm and l_out_norm
-                and (tr_p1 <= tr_p2 * 0.8)
-                and (tr_p2 >= tr_p1 * 1.3)
+                and (tr_p1 <= tr_p2 * 0.6)
+                and (tr_p2 >= tr_p1 * 1.7)
                 and (
-                    tr_c >= tr_p2 * 1.3
-                    or (is_p1_green and (tr_p1 + tr_c >= tr_p2 * 1.3))
+                    tr_c >= tr_p2 * 1.7
+                    or (is_p1_green and (tr_p1 + tr_c >= tr_p2 * 1.7))
                 )
             )
 
             dbr_ext = (
                 is_p3_red and is_c_green
                 and l_in_ext and l_out_ext
-                and (tr_p2 <= tr_p3 * 0.8)
-                and (tr_p3 >= tr_p2 * 1.3)
+                and (tr_p2 <= tr_p3 * 0.6)
+                and (tr_p3 >= tr_p2 * 1.7)
                 and (
-                    tr_p1 >= tr_p3 * 1.3
-                    or (is_p1_green and (tr_p1 + tr_c >= tr_p3 * 1.3))
+                    tr_p1 >= tr_p3 * 1.7
+                    or (is_p1_green and (tr_p1 + tr_c >= tr_p3 * 1.7))
                 )
             )
 
@@ -301,22 +301,22 @@ def scan_supply_demand_zones(
             rbr_std = (
                 is_p2_green and is_c_green
                 and l_in_norm and l_out_norm
-                and (tr_p1 <= tr_p2 * 0.8)
-                and (tr_p2 >= tr_p1 * 1.3)
+                and (tr_p1 <= tr_p2 * 0.6)
+                and (tr_p2 >= tr_p1 * 1.7)
                 and (
-                    tr_c >= tr_p2 * 1.3
-                    or (is_p1_green and (tr_p1 + tr_c >= tr_p2 * 1.3))
+                    tr_c >= tr_p2 * 1.7
+                    or (is_p1_green and (tr_p1 + tr_c >= tr_p2 * 1.7))
                 )
             )
 
             rbr_ext = (
                 is_p3_green and is_c_green
                 and l_in_ext and l_out_ext
-                and (tr_p2 <= tr_p3 * 0.8)
-                and (tr_p3 >= tr_p2 * 1.3)
+                and (tr_p2 <= tr_p3 * 0.6)
+                and (tr_p3 >= tr_p2 * 1.7)
                 and (
-                    tr_p1 >= tr_p3 * 1.3
-                    or (is_p1_green and (tr_p1 + tr_c >= tr_p3 * 1.3))
+                    tr_p1 >= tr_p3 * 1.7
+                    or (is_p1_green and (tr_p1 + tr_c >= tr_p3 * 1.7))
                 )
             )
 
@@ -367,7 +367,7 @@ def scan_supply_demand_zones(
             "Proximal": round(proximal, 5),
             "Distal": round(distal, 5),
             "Target (1:3)": round(target, 5),
-            "Formed At": df.index[i]
+            "Formed At": df.index[base_idx]
         })
 
     return zones
